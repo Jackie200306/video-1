@@ -10,7 +10,30 @@ A 1920×1080 / 60 fps animated history of the Bitcoin price, from the genesis bl
 - The sound effects are ECG beeps, risers and bells at peaks, glass breaking when a bubble
   bursts, a falling whistle and an impact boom at crash bottoms, whooshes, and a heartbeat
   at the end.
+- The ending asks 「假如 2010 年 7 月买入 1 万元比特币，现在值多少钱？」. It then pauses for
+  about 2.6 s with a thinking timer.
+- After the pause the amount rolls up to ¥6,950,407,924 (≈69.5 亿元). The figure uses
+  $0.0858 on 2010-07-18 at about 6.77 CNY/USD, and $60,200 now at about 6.713 CNY/USD.
 - The closing line 「现在再次回到不到一半的价格，你敢买吗？」 is on-screen text only.
+
+## BGM (beat-synced)
+
+The BGM is not included because it is a commercial track. To use one, pass the audio file
+and the drop is lined up automatically:
+
+```bash
+BGM=we_never.mp3 ./build.sh                 # the drop lands exactly on the 「现在值多少钱？」 amount reveal
+BGM=we_never.mp3 BGM_SPEED=0.9 ./build.sh   # slowed 0.9x version
+BGM=we_never.mp3 DROP=62.3 ./build.sh       # force a specific drop (seconds into the song)
+```
+
+`bgm.py` works in these steps:
+1. It detects the tempo, the beat grid and the drop, i.e. the bar where loudness jumps after a quieter stretch.
+2. It offsets the song so that drop lands on the reveal frame.
+3. It snaps three other moments to beats: the question card, the instant the rolling amount
+   lands, and the final 「你敢买吗？」 hit.
+4. It adds a low-pass build-up during the 2.6 s thinking pause and ducks the music under big
+   sound effects.
 
 ## Build
 
@@ -27,6 +50,7 @@ Requirements: Python 3 with numpy and scipy, Node with Playwright and Chromium, 
 | `render/scene.js` | deterministic canvas renderer. `renderFrame(i)` draws frame *i* |
 | `render/capture.js` | headless Chromium frame capture piped to ffmpeg |
 | `audio.py` | procedural sound effect synthesis timed from the same timeline |
+| `bgm.py` | BGM beat and drop detection, alignment, build-up and ducking |
 | `build.sh` | renders in parallel, then muxes and normalizes loudness |
 
 ## Data

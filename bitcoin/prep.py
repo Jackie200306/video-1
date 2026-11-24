@@ -165,7 +165,33 @@ BASE_SPEED = [  # (date, days per second of video)
 
 KY = 300.0          # world units per decade of price (x unit = 1 day)
 INTRO = 2.2         # seconds of ECG flatline before the playhead starts moving
-OUTRO = 13.0        # seconds after reaching "now"
+# Ending, in seconds after the head reaches "now":
+#   overview pull-back -> question "假如…买入1万元…现在值多少钱？" -> thinking pause
+#   -> amount reveal (the BGM drop lands here) -> final line -> "你敢买吗？"
+END = dict(q=4.6, q_in=0.6, pause=2.6, count=0.9, hold=2.6, line_gap=2.0, tail=4.4)
+SYNC = os.path.join(HERE, 'build', 'bgm_sync.json')
+BUY = dict(d='2010-07-18', cny_usd_then=6.7735, cny_usd_now=6.713, rmb=10000)
+
+
+def ending_times(t_now):
+    q = t_now + END['q']
+    rev = q + END['q_in'] + END['pause']
+    fin = rev + END['count'] + END['hold']
+    slam = fin + END['line_gap']
+    if os.path.exists(SYNC):
+        # snap the other hits to the music's beat grid (the drop is already on `rev`)
+        beats = np.array(json.load(open(SYNC))['beats_video'])
+        def snap(x, lo, hi):
+            c = beats[(beats >= x + lo) & (beats <= x + hi)]
+            return float(c[np.argmin(np.abs(c - x))]) if len(c) else x
+        q = snap(q, -0.45, 0.4)
+        fin = snap(fin, -0.4, 0.45)
+        slam = snap(fin + END['line_gap'], -0.45, 0.45)
+    count = END['count']
+    if os.path.exists(SYNC):
+        bp = json.load(open(SYNC))['beat_period']
+        count = bp * max(1, round(1.1 / bp))       # the amount lands exactly on a later beat
+    return dict(q=q, rev=rev, rev_count=count, fin=fin, slam=slam, end=slam + END['tail'])
 
 def build_timeline(first_day, prices):
     last_day = first_day + len(prices) - 1
@@ -194,7 +220,8 @@ def build_timeline(first_day, prices):
     # smooth arrival at "now": decelerate to zero
     tg = np.concatenate([[0], np.cumsum((dens[1:] + dens[:-1]) * 0.5 * step)])
     T_run = tg[-1]
-    T_total = INTRO + T_run + OUTRO
+    ending = ending_times(INTRO + T_run)
+    T_total = ending['end']
     nF = int(round(T_total * FPS))
     t = np.arange(nF) / FPS
     # playhead
@@ -208,7 +235,7 @@ def build_timeline(first_day, prices):
         e['t'] = INTRO + float(np.interp(day(e['d']), Dg, tg))
         e['day'] = day(e['d'])
     t_now = INTRO + T_run
-    return dict(t=t, D=D, nF=nF, T_total=T_total, t_now=t_now)
+    return dict(t=t, D=D, nF=nF, T_total=T_total, t_now=t_now, ending=ending)
 
 # --------------------------------------------------------------------------
 # 3. camera
@@ -275,8 +302,10 @@ def build_camera(tl, first_day, logp):
     # look-back window (days of history kept in frame)
     lb = np.interp(D, [0, 300, 700, 1200, 2500, 6000], [240, 260, 280, 320, 340, 340])
     t_now = tl['t_now']
-    ov = bump(t, t_now + 3.7, 1.7, 1.3, 1.5)            # overview pull-back
-    endf = smoothstep(t_now + 5.2, t_now + 7.6, t)
+    E = tl['ending']
+    ov = smoothstep(t_now + 2.0, t_now + 3.8, t) * (1 - smoothstep(E['fin'] - 0.3, E['fin'] + 1.3, t))
+    endf = smoothstep(E['fin'] - 0.3, E['fin'] + 2.0, t)
+    zoom = zoom + 0.06 * bump(t, E['rev'] + 0.02, 0.05, 0.25, 1.2)   # punch at the reveal
 
     ymin = np.empty(nF); ymax = np.empty(nF); yh = logp_at(D)
     LA = int(0.35 * FPS)                               # look-ahead
@@ -336,19 +365,26 @@ def build_camera(tl, first_day, logp):
     xs = np.arange(0, n, 4) + first_day
     ys = (logp[::4] - cl_o) * KY * sy_o
     xs = np.append(xs, idx[-1]); ys = np.append(ys, (logp[-1] - cl_o) * KY * sy_o)
-    Lxo, Lyo, dso = xs.mean(), ys.mean(), 4000.0
-    box = (-0.86, 0.78, -0.50, 0.56)
-    for _ in range(60):
-        nx, ny = project_np(Lxo, Lyo, dso, yaw_o, pitch_o, xs, ys)
-        sc = max((nx.max() - nx.min()) / (box[1] - box[0]), (ny.max() - ny.min()) / (box[3] - box[2]))
-        dso *= sc ** 0.7
-        Lxo += ((nx.max() + nx.min()) / 2 - (box[0] + box[1]) / 2) * dso * TANH * 0.6
-        Lyo += ((ny.max() + ny.min()) / 2 - (box[2] + box[3]) / 2) * dso * TANV * 0.6
+    def fit(box):
+        Lxo, Lyo, dso = xs.mean(), ys.mean(), 4000.0
+        for _ in range(80):
+            nx, ny = project_np(Lxo, Lyo, dso, yaw_o, pitch_o, xs, ys)
+            sc = max((nx.max() - nx.min()) / (box[1] - box[0]), (ny.max() - ny.min()) / (box[3] - box[2]))
+            dso *= sc ** 0.7
+            Lxo += ((nx.max() + nx.min()) / 2 - (box[0] + box[1]) / 2) * dso * TANH * 0.6
+            Lyo += ((ny.max() + ny.min()) / 2 - (box[2] + box[3]) / 2) * dso * TANV * 0.6
+        return Lxo, Lyo, dso
+    f_all = fit((-0.86, 0.78, -0.50, 0.56))
+    f_inv = fit((-0.90, 0.36, -0.06, 0.60))        # leave the lower right free for the amount
+    inv = smoothstep(E['q'] - 0.7, E['q'] + 0.3, t)
+    Lxo = f_all[0] * (1 - inv) + f_inv[0] * inv
+    Lyo = f_all[1] * (1 - inv) + f_inv[1] * inv
+    dso = np.exp(math.log(f_all[2]) * (1 - inv) + math.log(f_inv[2]) * inv)
     o = ov
     Lx = Lx * (1 - o) + Lxo * o
     Ly = Ly * (1 - o) + Lyo * o
     cl = cl * (1 - o) + cl_o * o
-    dist = np.exp(np.log(dist) * (1 - o) + math.log(dso) * o)
+    dist = np.exp(np.log(dist) * (1 - o) + np.log(dso) * o)
     sy = np.exp(np.log(sy) * (1 - o) + math.log(sy_o) * o)
     yaw = yaw * (1 - o) + yaw_o * o
     pitch = pitch * (1 - o) + pitch_o * o
@@ -370,6 +406,8 @@ def build_camera(tl, first_day, logp):
             shx += amp * env * noise_x
             shy += amp * env * noise_y
             roll += np.radians(1.2 if not e.get('minor') else 0.5) * env * np.sin((t - e['t']) * 26)
+    env = np.where(t >= E['rev'], np.exp(-(t - E['rev']) * 5.0), 0.0)
+    shx += 14 * env * noise_x; shy += 14 * env * noise_y
     return dict(Lx=Lx, Ly=Ly, dist=dist, yaw=yaw, pitch=pitch, roll=roll,
                 sy=sy, shx=shx, shy=shy, ov=ov, endf=endf, cl=cl)
 
@@ -439,7 +477,14 @@ def main():
         hit = np.nonzero(logp >= k)[0]
         rails.append(dict(k=k, day=int(hit[0] + first_day) if len(hit) else None,
                           t=float(np.interp(hit[0] + first_day, tl['D'], tl['t'])) if len(hit) else None))
-    out = dict(rails=rails, 
+    # "假如当时买入1万元" numbers
+    bi = day(BUY['d']) - first_day
+    buy_p = float(prices[bi]); now_p = float(prices[-1])
+    coins = BUY['rmb'] / BUY['cny_usd_then'] / buy_p
+    value = coins * now_p * BUY['cny_usd_now']
+    invest = dict(day=day(BUY['d']), date=BUY['d'], rmb=BUY['rmb'], buy_p=buy_p, now_p=now_p,
+                  coins=coins, value=value, mult=value / BUY['rmb'])
+    out = dict(rails=rails, end=tl['ending'], invest=invest, 
         fps=FPS, nF=tl['nF'], T=tl['T_total'], t_now=tl['t_now'], intro=INTRO,
         KY=KY, fovY=FOV_Y, first_day=int(first_day), D0=D0.isoformat(),
         logp=[round(float(v), 5) for v in logp],

@@ -284,7 +284,7 @@ function drawRails(c, t) {
     ctx.setLineDash([]);
     // label near the right end
     const lp = proj(c, Dh + c.dist * 0.42, Y);
-    if (lp && lp.y > 150 && lp.y < H - 150) {
+    if (lp && lp.y > 150 && lp.y < H - 150 && c.ov < 0.5) {
       ctx.font = `${Math.round(26 + 14 * flash)}px BarlowSemi`;
       ctx.fillStyle = flash > 0.05 ? `rgba(255,205,130,${0.5 + 0.5 * flash})` : `rgba(200,210,255,${reached ? 0.5 : 0.3})`;
       ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
@@ -425,6 +425,7 @@ function drawMarkers(c, t) {
     const cycle = CYCLE.has(e.d) || (e.kind === 'bottom' && !e.minor);
     let fade = smooth(e.t + 0.2, e.t + 1.6, t) * clamp(0.35 + 0.65 * p.s, 0.3, 1) * (1 - 0.7 * c.endf);
     if (!cycle) fade *= 1 - c.ov;
+    fade *= 1 - 0.55 * smooth(TL.end.q - 0.3, TL.end.q + 0.3, t) * (1 - smooth(TL.end.fin - 0.3, TL.end.fin + 0.3, t));
     if (fade < 0.01) continue;
     const isPeak = e.kind === 'peak';
     const col = isPeak ? GOLD : RED;
@@ -527,6 +528,21 @@ function drawParticles(c, t, i) {
       const a = (1 - age / life) * (fall ? 0.9 : 0.6);
       const r = fall ? 2.2 + 1.6 * h1 : 1.6 + 1.2 * h1;
       ctx.fillStyle = rgba(col, a); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // coin shower when the amount lands
+  {
+    const E = TL.end, tl = E.rev + E.rev_count, age = t - tl;
+    if (age > 0 && age < 2.2) {
+      for (let k = 0; k < 120; k++) {
+        const h1 = hash(k * 3.1 + 7), h2 = hash(k * 5.7 + 1), h3 = hash(k * 9.3 + 4);
+        const life = 1.2 + h3; if (age > life) continue;
+        const ang = -Math.PI / 2 + (h1 - 0.5) * 2.6, sp = 380 + 700 * h2;
+        const x = INV_X + Math.cos(ang) * sp * age, y = INV_Y + Math.sin(ang) * sp * age + 0.5 * 1500 * age * age;
+        const a = Math.pow(1 - age / life, 1.2);
+        ctx.fillStyle = rgba(mixc(GOLD, [255, 255, 255], h3 * 0.5), a);
+        ctx.beginPath(); ctx.ellipse(x, y, 4 + 4 * h3, (4 + 4 * h3) * Math.abs(Math.cos(age * 9 + k)), 0, 0, Math.PI * 2); ctx.fill();
+      }
     }
   }
   // bursts: peaks (gold), bubble break (shards), impacts (red debris)
@@ -759,7 +775,8 @@ function drawHeadline(t) {
   const chs = TL.chapters.slice();
   chs[0] = Object.assign({}, chs[0], { t: 0.35 });
   chs.push({ t: T_NOW + 2.3, text: '17 年，从 {$0.00076} 到 {$126,200}' });
-  const endFade = 1 - smooth(T_NOW + 5.4, T_NOW + 6.0, t);
+  chs.push({ t: TL.end.q - 0.25, text: '假如 2010 年 7 月买入 {1 万元} 比特币' });
+  const endFade = 1 - smooth(TL.end.fin - 0.5, TL.end.fin + 0.1, t);
   for (let k = 0; k < chs.length; k++) {
     const ch = chs[k], next = chs[k + 1];
     const tin = ch.t, tout = next ? next.t : 1e9;
@@ -772,7 +789,7 @@ function drawHeadline(t) {
 }
 function drawHUD(c, t) {
   const Dh = c.D;
-  const a = smooth(0.6, 1.4, t) * (1 - smooth(T_NOW + 5.2, T_NOW + 6.0, t));
+  const a = smooth(0.6, 1.4, t) * (1 - smooth(TL.end.q - 0.4, TL.end.q + 0.3, t));
   if (a < 0.01) return;
   const x = 58, y = H - 160;
   ctx.save(); ctx.globalAlpha = a;
@@ -831,7 +848,7 @@ function drawEndLines(c, t) {
   ctx.restore();
 }
 function drawFinal(t) {
-  const t0 = T_NOW + 5.6;
+  const t0 = TL.end.fin - 0.4;
   const dim = smooth(t0, t0 + 1.2, t);
   if (dim <= 0) return;
   const g = ctx.createRadialGradient(W / 2, H / 2, 100, W / 2, H / 2, W * 0.75);
@@ -839,7 +856,7 @@ function drawFinal(t) {
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // line 1, revealed character by character
   const l1 = '现在再次回到不到一半的价格，';
-  const t1 = t0 + 0.9;
+  const t1 = TL.end.fin + 0.35;
   ctx.save(); ctx.font = '76px NotoBlack'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
   const widths = [...l1].map(ch => ctx.measureText(ch).width);
   const total = widths.reduce((s, v) => s + v, 0);
@@ -856,7 +873,7 @@ function drawFinal(t) {
   });
   ctx.restore();
   // line 2: slam
-  const t2 = T_NOW + 8.5;
+  const t2 = TL.end.slam;
   const age = t - t2;
   if (age > 0) {
     const sc = lerp(1.75, 1, easeOutBack(age / 0.32, 2.4));
@@ -870,6 +887,141 @@ function drawFinal(t) {
     ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = `rgba(255,235,200,${0.6 * al})`; ctx.strokeText('你敢买吗？', 0, 0);
     ctx.restore();
   }
+}
+
+// ---------------------------------------------------------------- "假如当时买入 1 万元"
+const INV_X = 1920 * 0.685, INV_Y = 1080 * 0.555;
+function fmtCNY(v) { return '¥' + Math.round(v).toLocaleString('en-US'); }
+function drawInvest(c, t) {
+  const E = TL.end, I = TL.invest;
+  const a = smooth(E.q - 0.1, E.q + 0.5, t) * (1 - smooth(E.fin - 0.45, E.fin + 0.15, t));
+  if (a < 0.01) return;
+  const count = E.rev_count;
+  const u = (t - E.rev) / count;                       // 0..1 while the amount rolls up
+  const done = t >= E.rev + count;
+  ctx.save();
+  // soft dark backdrop for the text block
+  const bx = INV_X, by = INV_Y;
+  const bg = ctx.createRadialGradient(bx, by + 60, 40, bx, by + 60, 700);
+  bg.addColorStop(0, `rgba(3,5,12,${0.62 * a})`); bg.addColorStop(1, 'rgba(3,5,12,0)');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  // gold sweep along the real path from the buy day to now
+  const B = projDay(c, I.day);
+  if (t > E.rev - 0.02) {
+    const p = easeOutCubic(clamp(u, 0, 1));
+    const dEnd = lerp(I.day, c.D, p);
+    const pts = [];
+    for (let d = I.day; d <= dEnd; d += 3) { const q = projDay(c, d); if (q) pts.push(q); }
+    const qe = projDay(c, dEnd); if (qe) pts.push(qe);
+    if (pts.length > 1) {
+      ctx.globalCompositeOperation = 'lighter'; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      for (const [w, al] of [[26, 0.10], [12, 0.22], [4, 0.9]]) {
+        ctx.strokeStyle = rgba(GOLD, al * a); ctx.lineWidth = w;
+        ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (const q of pts) ctx.lineTo(q.x, q.y); ctx.stroke();
+      }
+      if (!done && qe) {
+        const g = ctx.createRadialGradient(qe.x, qe.y, 0, qe.x, qe.y, 60);
+        g.addColorStop(0, 'rgba(255,245,210,0.95)'); g.addColorStop(1, 'rgba(255,200,90,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(qe.x, qe.y, 60, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  }
+  // buy marker
+  if (B) {
+    const pa = a * smooth(E.q, E.q + 0.4, t);
+    const pulse = 0.5 + 0.5 * Math.sin(t * 5);
+    ctx.strokeStyle = rgba(GOLD, pa * (0.5 + 0.5 * pulse)); ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(B.x, B.y, 14 + 6 * pulse, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = rgba([255, 255, 255], pa); ctx.beginPath(); ctx.arc(B.x, B.y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '34px NotoBlack'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    const lbl = '买入 ¥10,000';
+    const lw = ctx.measureText(lbl).width + 30;
+    const ly = B.y - 30;
+    ctx.fillStyle = `rgba(255,170,50,${0.95 * pa})`; roundRect(B.x - lw / 2, ly - 50, lw, 50, 10); ctx.fill();
+    ctx.fillStyle = `rgba(27,18,5,${pa})`; ctx.fillText(lbl, B.x, ly - 6);
+    ctx.font = '26px BarlowSemi'; ctx.fillStyle = `rgba(255,225,190,${0.85 * pa})`;
+    ctx.fillText('2010.07 · $' + I.buy_p.toFixed(3), B.x, ly - 58);
+  }
+  // now marker: a pulsing "?" until the reveal
+  const N = projDay(c, c.D);
+  if (N && !done) {
+    const qa = a * (1 - smooth(E.rev - 0.05, E.rev + 0.1, t));
+    ctx.font = '64px NotoBlack'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = rgba(GOLD, qa * (0.6 + 0.4 * Math.sin(t * 8))); ctx.fillText('?', N.x, N.y - 26);
+  }
+
+  // text block
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const qIn = smooth(E.q + 0.15, E.q + 0.6, t);
+  const qUp = smooth(E.rev - 0.05, E.rev + 0.25, t);
+  // question
+  {
+    const size = lerp(100, 46, qUp);
+    const y = lerp(by - 10, by - 150, qUp) + (1 - qIn) * 30;
+    ctx.font = `${Math.round(size)}px NotoBlack`;
+    const s1 = '现在值', s2 = '多少钱', s3 = '？';
+    const w1 = ctx.measureText(s1).width, w2 = ctx.measureText(s2).width, w3 = ctx.measureText(s3).width;
+    let x = bx - (w1 + w2 + w3) / 2;
+    ctx.textAlign = 'left'; ctx.globalAlpha = a * qIn;
+    ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 24;
+    ctx.fillStyle = '#fff'; ctx.fillText(s1, x, y); x += w1;
+    ctx.fillStyle = '#ff9b2e'; ctx.fillText(s2, x, y); x += w2;
+    ctx.fillStyle = '#ff9b2e'; ctx.fillText(s3, x, y);
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+    // thinking timer: a ring that fills during the pause
+    const tp0 = E.q + 0.6, tp1 = E.rev;
+    const prog = clamp((t - tp0) / (tp1 - tp0), 0, 1);
+    const ra = a * qIn * (1 - qUp);
+    if (ra > 0.01) {
+      const rx = bx, ry = by + 110;
+      ctx.lineWidth = 6; ctx.strokeStyle = `rgba(255,255,255,${0.15 * ra})`;
+      ctx.beginPath(); ctx.arc(rx, ry, 30, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = rgba(GOLD, 0.95 * ra); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(rx, ry, 30, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2); ctx.stroke();
+      const dots = Math.floor((t - tp0) * 2.5) % 4;
+      ctx.font = '30px NotoBold'; ctx.textAlign = 'center'; ctx.fillStyle = `rgba(255,255,255,${0.7 * ra})`;
+      ctx.fillText('想一想' + '.'.repeat(Math.max(0, dots)), rx, ry + 64);
+    }
+  }
+  // amount
+  if (t >= E.rev) {
+    const uu = clamp(u, 0, 1);
+    const v = Math.exp(lerp(Math.log(I.rmb), Math.log(I.value), easeOutCubic(uu)));
+    const pop = done ? 1 + 0.12 * Math.exp(-(t - E.rev - count) * 9) : lerp(1.35, 1, easeOutBack(clamp((t - E.rev) / 0.18, 0, 1), 2));
+    ctx.save(); ctx.translate(bx, by + 10); ctx.scale(pop, pop);
+    ctx.font = '150px Barlow'; ctx.textAlign = 'center';
+    ctx.shadowColor = `rgba(255,170,40,${0.9 * a})`; ctx.shadowBlur = done ? 60 : 36;
+    ctx.fillStyle = rgba(done ? [255, 206, 90] : [255, 230, 170], a);
+    ctx.fillText(fmtCNY(v), 0, 0);
+    ctx.restore();
+    // ring burst when the number lands
+    const ab = t - (E.rev + count);
+    if (ab > 0 && ab < 1.0) {
+      const k = ab / 1.0;
+      ctx.strokeStyle = rgba(GOLD, (1 - k) * 0.9 * a); ctx.lineWidth = 5 * (1 - k) + 1;
+      ctx.beginPath(); ctx.arc(bx, by + 10, 160 + 520 * easeOutCubic(k), 0, Math.PI * 2); ctx.stroke();
+    }
+    const s1a = a * smooth(E.rev + count + 0.05, E.rev + count + 0.35, t);
+    if (s1a > 0.01) {
+      ctx.font = '72px NotoBlack'; ctx.fillStyle = `rgba(255,255,255,${s1a})`;
+      ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 20;
+      ctx.fillText('≈ ' + (I.value / 1e8).toFixed(1) + ' 亿元', bx, by + 140);
+      ctx.shadowBlur = 0;
+    }
+    const s2a = a * smooth(E.rev + count + 0.35, E.rev + count + 0.7, t);
+    if (s2a > 0.01) {
+      ctx.font = '34px NotoMed'; ctx.fillStyle = `rgba(255,214,160,${s2a})`;
+      ctx.fillText('约 ' + (I.coins / 1e4).toFixed(2) + ' 万枚比特币 · 翻了约 ' + Math.round(I.mult / 1e4) + ' 万倍', bx, by + 222);
+      ctx.font = '22px NotoMed'; ctx.fillStyle = `rgba(255,255,255,${0.45 * s2a})`;
+      ctx.fillText('按 2010年7月 与 2026年11月 汇率折算 · 未计手续费', bx, by + 270);
+    }
+  }
+  ctx.restore();
+  // flash on the drop and on landing
+  const f = Math.max(t >= E.rev ? 0.22 * Math.exp(-(t - E.rev) / 0.15) : 0, t >= E.rev + count ? 0.16 * Math.exp(-(t - E.rev - count) / 0.2) : 0);
+  if (f > 0.003) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = rgba([255, 200, 110], f); ctx.fillRect(0, 0, W, H); ctx.restore(); }
 }
 
 // ---------------------------------------------------------------- frame
@@ -901,6 +1053,7 @@ function renderFrame(i) {
   if (hp) drawHeadChip(c, t, hp);
   drawHeadline(t);
   drawHUD(c, t);
+  drawInvest(c, t);
   drawFinal(t);
   // vignette
   const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.72);

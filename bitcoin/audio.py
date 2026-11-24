@@ -270,17 +270,47 @@ for e in TL['events']:
         add(pop(), e['ta'], -17, pan=0.35)
         add(ecg_beep(985, 0.13), e['ta'], -18)
 
-# ending: draw lines, overview pull-back, final text
+# ending: draw lines, overview pull-back, "假如买入1万元" reveal, final text
+E = TL['end']
+HAS_BGM = os.path.exists(os.path.join(HERE, 'build', 'bgm_sync.json'))
 add(whoosh(0.6, 2000, 300), t_now + 0.05, -22, pan=0.3)
 add(whoosh(2.6, 150, 2500), t_now + 2.0, -15, send=0.4)
-add(whoosh(1.6, 2500, 200), t_now + 4.9, -19, send=0.3)
-t0 = t_now + 5.6 + 0.9
+# question pops in, then a quiet clock while the viewer thinks
+add(whoosh(0.4, 400, 3000), E['q'] - 0.3, -22, pan=0.2)
+add(pop(), E['q'] + 0.1, -16)
+if not HAS_BGM:
+    for kk, tk in enumerate(np.arange(E['q'] + 0.7, E['rev'] - 0.1, 0.5)):
+        add(tick(1500 if kk % 2 == 0 else 1150, 0.04), tk, -24, pan=0.15 * (-1) ** kk)
+    rdur = E['rev'] - (E['q'] + 0.6)
+    add(riser(rdur, True), E['rev'] - rdur, -24, send=0.2)
+# the drop: the amount appears and rolls up, then lands with coins
+add(impact(1.0), E['rev'], -8 if not HAS_BGM else -14, send=0.4)
+add(bell(880, 2.5, 0.8), E['rev'], -16, send=0.4)
+cnt = E['rev_count']
+for kk in range(22):                                    # rolling counter, fast -> slow
+    u = 1 - (1 - kk / 22) ** (1 / 3)                    # inverse of easeOutCubic spacing
+    add(tick(2200 + 40 * kk, 0.03), E['rev'] + u * cnt, -24, pan=0.3 * math.sin(kk))
+tl_ = E['rev'] + cnt
+add(bell(1046.5, 3.0, 1.0), tl_, -10, send=0.5)
+add(bell(1568, 2.4, 0.8), tl_ + 0.01, -14, send=0.5)
+add(shimmer(1.6, 80), tl_, -12, pan=0.2, send=0.3)
+coins = np.zeros(int(1.8 * SR))
+for _ in range(60):
+    t0 = abs(rng.normal(0, 0.35)); f = rng.uniform(3000, 7000); d = rng.uniform(0.04, 0.12)
+    tk_ = tt(d); s_ = np.sin(2 * np.pi * f * tk_) * np.exp(-tk_ / (d / 4)) + 0.5 * np.sin(2 * np.pi * f * 1.48 * tk_) * np.exp(-tk_ / (d / 5))
+    i = int(t0 * SR)
+    if i + len(s_) < len(coins):
+        coins[i:i + len(s_)] += s_ * rng.uniform(0.2, 0.5)
+add(coins, tl_ + 0.05, -16, pan=-0.1, send=0.3)
+# back down to the present, final line, "你敢买吗？"
+add(whoosh(1.6, 2500, 200), E['fin'] - 0.4, -19, send=0.3)
 for kk in range(14):
-    add(typewriter(), t0 + kk * 0.075, -26, pan=(kk - 7) / 14)
-for kk, tb in enumerate(np.arange(t_now + 6.3, t_now + 12.4, 0.92)):
-    add(heartbeat(1.0 if abs(tb - (t_now + 8.5)) > 0.2 else 0), tb, -9 - max(0, kk - 5) * 2)
-add(impact(1.1), t_now + 8.5, -6, send=0.5)
-add(bell(440, 4.0, 0.6), t_now + 8.5, -17, send=0.6)
+    add(typewriter(), E['fin'] + 0.35 + kk * 0.075, -26, pan=(kk - 7) / 14)
+for kk, tb in enumerate(np.arange(E['fin'] + 0.2, E['end'] - 0.3, 0.92)):
+    if abs(tb - E['slam']) > 0.25:
+        add(heartbeat(1.0), tb, -9 - max(0, kk - 5) * 2 - (6 if HAS_BGM else 0))
+add(impact(1.1), E['slam'], -6, send=0.5)
+add(bell(440, 4.0, 0.6), E['slam'], -17, send=0.6)
 
 # ambient rain bed (very quiet), fades in and out
 n = N
@@ -291,7 +321,8 @@ for _ in range(int(T * 18)):
     drops[i:i + d] += rng.normal(0, 1, d) * np.exp(-np.arange(d) / (d / 4)) * rng.uniform(0.1, 0.5)
 rain += hp(drops, 1500) * 0.3
 fade = np.clip(np.arange(n) / SR / 1.5, 0, 1) * np.clip((T - np.arange(n) / SR) / 1.5, 0, 1)
-L += rain * fade * db(-27); R += np.roll(rain, 997) * fade * db(-27)
+rg = db(-27 if not HAS_BGM else -36)
+L += rain * fade * rg; R += np.roll(rain, 997) * fade * rg
 
 # ----------------------------------------------------------------- reverb + master
 ir_t = tt(1.8)
