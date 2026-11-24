@@ -22,12 +22,17 @@ The BGM is not committed because it is a copyrighted track. The version in
 `output/bitcoin_lifeline_bgm.mp4` uses the user's own recording of 《We Never》:
 
 ```bash
-BGM=we_never.m4a FIT_VIDEO=1 DROP_EXACT=102.50 OUT=output/bitcoin_lifeline_bgm.mp4 ./build.sh
+BGM=we_never.m4a FIT_VIDEO=1 DROP_EXACT=102.50 SPLICE="100.250:85.10198:0.20" \
+  OUT=output/bitcoin_lifeline_bgm.mp4 ./build.sh
 ```
 
 - `FIT_VIDEO=1`: the song plays from 0:00 and the video is retimed (slightly faster scrolling)
   so the amount reveal lands exactly on the song's drop.
 - `DROP_EXACT=102.50`: the moment the song bursts back in after its near-silence.
+- `SPLICE=at:lag:xfade`: at 100.25 s the music crossfades (0.2 s) back one repeat of the song
+  (85.102 s). The reveal then uses the first pass's drop, which sounds better. The two passes
+  are sample-aligned at the join (correlation ≈0.86), and the crossfade sits between two beats
+  so no hit is doubled.
 - `bgm.py` snaps three other moments to beats: the question card, the instant the rolling
   amount lands, and the final 「你敢买吗？」 hit. It also ducks the music under big sound effects.
 

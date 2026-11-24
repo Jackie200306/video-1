@@ -121,6 +121,14 @@ def analyze(song_path):
                 beats_video=[float(b) for b in bv if -1 < b < T + 4],
                 downbeats_video=[float(b - offset) for b in downbeats if -1 < b - offset < T + 4],
                 candidates=cands[:8])
+    if os.environ.get('SPLICE'):
+        # SPLICE="at:lag[:xfade]" -> from video time `at` on, play the song `lag` seconds earlier
+        # (e.g. jump back one repeat of the song so the reveal uses the first, better drop)
+        sp = []
+        for item in os.environ['SPLICE'].split(','):
+            p = [float(v) for v in item.split(':')]
+            sp.append(dict(at=p[0], lag=p[1], xfade=p[2] if len(p) > 2 else 0.25))
+        info['splices'] = sp
     if os.environ.get('FIT_VIDEO'):
         info['target_rev'] = float(t_rev)
         info['own_breakdown'] = True                # the song already goes quiet before its drop
@@ -155,9 +163,21 @@ def mix():
     if info['loop']:
         a0, ll = info['loop_start'], info['loop_len']
         ts = np.where(ts < a0, ts, a0 + np.mod(ts - a0, ll))
-    idx = np.clip(np.round(ts * SR).astype(int), 0, len(song) - 1)
-    valid = (ts >= 0) & (ts < len(song) / SR)
-    bgm = song[idx] * valid[:, None]
+    def take(ts_):
+        i_ = np.clip(np.round(ts_ * SR).astype(int), 0, len(song) - 1)
+        ok = (ts_ >= 0) & (ts_ < len(song) / SR)
+        return song[i_] * ok[:, None]
+    bgm = take(ts)
+    t_out = np.arange(n) / SR
+    for sp in info.get('splices', []):
+        # sample-aligned crossfade into the earlier pass of the song (raised-cosine, gains sum to 1
+        # because the two passes are strongly correlated at the splice point)
+        a0, a1 = sp['at'] - sp['xfade'] / 2, sp['at'] + sp['xfade'] / 2
+        w = np.clip((t_out - a0) / (a1 - a0), 0, 1)
+        w = 0.5 - 0.5 * np.cos(np.pi * w)
+        ts = np.where(t_out >= a0, ts - sp['lag'], ts)
+        bgm = bgm * (1 - w)[:, None] + take(ts) * w[:, None]
+        print('splice at %.2fs: jump back %.4fs (xfade %.2fs)' % (sp['at'], sp['lag'], sp['xfade']))
     t = np.arange(n) / SR
     # loudness: bring the music to a steady level under the SFX
     blk = int(0.4 * SR)
