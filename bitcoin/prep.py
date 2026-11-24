@@ -568,6 +568,9 @@ def main():
     value = coins * now_p * BUY['cny_usd_now']
     invest = dict(day=day(BUY['d']), date=BUY['d'], rmb=BUY['rmb'], buy_p=buy_p, now_p=now_p,
                   coins=coins, value=value, mult=value / BUY['rmb'])
+    if VLANG == 'en':                       # English version: $1,000 in USD, no FX conversion
+        usd = 1000.0
+        invest.update(cur='USD', rmb=usd, coins=usd / buy_p, value=usd / buy_p * now_p, mult=now_p / buy_p)
     out = dict(rails=rails, end=tl['ending'], invest=invest, lang=VLANG, 
         fps=FPS, nF=tl['nF'], T=tl['T_total'], t_now=tl['t_now'], intro=INTRO,
         KY=KY, fovY=FOV_Y, first_day=int(first_day), D0=D0.isoformat(),

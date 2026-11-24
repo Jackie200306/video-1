@@ -40,7 +40,7 @@ def glow_text(base, xy, runs, font):
 TXT = {
     'zh': dict(kicker='比特币 · 17 年生命线', l1=[('1万元', ORANGE), ('买比特币', WHITE)], l2=[('现在值多少？', WHITE)],
                sub='涨过 1.6 亿倍，又跌回一半', disc='历史不代表未来 · 不构成投资建议'),
-    'en': dict(kicker='BITCOIN · A 17-YEAR LIFELINE', l1=[('¥10,000', ORANGE), (' in Bitcoin', WHITE)], l2=[("What's it worth now?", WHITE)],
+    'en': dict(kicker='BITCOIN · A 17-YEAR LIFELINE', l1=[('$1,000', ORANGE), (' in Bitcoin', WHITE)], l2=[("What's it worth now?", WHITE)],
                sub='Up 160 million times, then back below half', disc='Past performance is no guarantee of future results · Not investment advice'),
 }
 L = TXT['zh']

@@ -40,12 +40,12 @@ const STR = {
         disclaimer: '历史不代表未来 · 不构成投资建议',
         fx: '按 2010年7月 与 2026年11月 汇率折算 · 未计手续费' },
   en: { ath: 'ALL-TIME HIGH', milestone: 'MILESTONE', start: 'GENESIS', now: 'NOW', fromHigh: '', noPrice: 'No price yet',
-        overview: '17 years: from {$0.00076} to {$126,200}', invest: "If you'd put {¥10,000} into Bitcoin in July 2010",
+        overview: '17 years: from {$0.00076} to {$126,200}', invest: "If you'd put {$1,000} into Bitcoin in July 2010",
         hudTitle: 'Bitcoin (BTC) · USD · log scale', hudAth: 'All-time high', hudDd: 'From the high', newHigh: 'NEW HIGH',
         half: 'Half of the high  ', athLine: 'All-time high  ', final1: "Now it's back below half its peak.", final1hl: [3, 4], final2: 'Do you dare to buy?',
-        bought: 'Bought ¥10,000', q: ["What's it ", 'worth', ' now?'], think: 'Think about it',
+        bought: 'Bought $1,000', q: ["What's it ", 'worth', ' now?'], think: 'Think about it',
         disclaimer: 'Past performance is no guarantee of future results · Not investment advice',
-        fx: 'Converted at Jul 2010 and Nov 2026 exchange rates · fees not included' },
+        fx: 'Bought at $0.086 in Jul 2010 · valued at $60,200 · fees not included' },
 };
 const tr = k => STR[(TL && TL.lang) || 'zh'][k];
 const EN_MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -917,7 +917,7 @@ function drawFinal(t) {
 
 // ---------------------------------------------------------------- "假如当时买入 1 万元"
 const INV_X = 1920 * 0.685, INV_Y = 1080 * 0.555;
-function fmtCNY(v) { return '¥' + Math.round(v).toLocaleString('en-US'); }
+function fmtCNY(v) { return (TL.invest.cur === 'USD' ? '$' : '¥') + Math.round(v).toLocaleString('en-US'); }
 function drawInvest(c, t) {
   const E = TL.end, I = TL.invest;
   const a = smooth(E.q - 0.1, E.q + 0.5, t) * (1 - smooth(E.fin - 0.45, E.fin + 0.15, t));
@@ -1029,17 +1029,18 @@ function drawInvest(c, t) {
       ctx.strokeStyle = rgba(GOLD, (1 - k) * 0.9 * a); ctx.lineWidth = 5 * (1 - k) + 1;
       ctx.beginPath(); ctx.arc(bx, by + 10, 160 + 520 * easeOutCubic(k), 0, Math.PI * 2); ctx.stroke();
     }
+    if (TL.lang === 'en') ctx.textAlign = 'center';      // English lines are longer: centre them under the amount
     const s1a = a * smooth(E.rev + count + 0.05, E.rev + count + 0.35, t);
     if (s1a > 0.01) {
       ctx.font = '72px NotoBlack'; ctx.fillStyle = `rgba(255,255,255,${s1a})`;
       ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 20;
-      ctx.fillText(TL.lang === 'en' ? '≈ ¥' + (I.value / 1e9).toFixed(2) + ' billion' : '≈ ' + (I.value / 1e8).toFixed(1) + ' 亿元', bx, by + 140);
+      ctx.fillText(TL.lang === 'en' ? '≈ $' + Math.round(I.value / 1e6) + ' million' : '≈ ' + (I.value / 1e8).toFixed(1) + ' 亿元', bx, by + 140);
       ctx.shadowBlur = 0;
     }
     const s2a = a * smooth(E.rev + count + 0.35, E.rev + count + 0.7, t);
     if (s2a > 0.01) {
       ctx.font = '34px NotoMed'; ctx.fillStyle = `rgba(255,214,160,${s2a})`;
-      ctx.fillText(TL.lang === 'en' ? 'About ' + (Math.round(I.coins / 100) * 100).toLocaleString('en-US') + ' BTC · up roughly ' + (Math.round(I.mult / 1e3) * 1e3).toLocaleString('en-US') + 'x'
+      ctx.fillText(TL.lang === 'en' ? 'About ' + (Math.round(I.coins / 10) * 10).toLocaleString('en-US') + ' BTC · up roughly ' + (Math.round(I.mult / 1e3) * 1e3).toLocaleString('en-US') + 'x'
         : '约 ' + (I.coins / 1e4).toFixed(2) + ' 万枚比特币 · 翻了约 ' + Math.round(I.mult / 1e4) + ' 万倍', bx, by + 222);
       ctx.font = '22px NotoMed'; ctx.fillStyle = `rgba(255,255,255,${0.45 * s2a})`;
       ctx.fillText(tr('fx'), bx, by + 270);
