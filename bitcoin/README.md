@@ -18,22 +18,20 @@ A 1920×1080 / 60 fps animated history of the Bitcoin price, from the genesis bl
 
 ## BGM (beat-synced)
 
-The BGM is not included because it is a commercial track. To use one, pass the audio file
-and the drop is lined up automatically:
+The BGM is not committed because it is a copyrighted track. The version in
+`output/bitcoin_lifeline_bgm.mp4` uses the user's own recording of 《We Never》:
 
 ```bash
-BGM=we_never.mp3 ./build.sh                 # the drop lands exactly on the 「现在值多少钱？」 amount reveal
-BGM=we_never.mp3 BGM_SPEED=0.9 ./build.sh   # slowed 0.9x version
-BGM=we_never.mp3 DROP=62.3 ./build.sh       # force a specific drop (seconds into the song)
+BGM=we_never.m4a FIT_VIDEO=1 DROP_EXACT=102.50 OUT=output/bitcoin_lifeline_bgm.mp4 ./build.sh
 ```
 
-`bgm.py` works in these steps:
-1. It detects the tempo, the beat grid and the drop, i.e. the bar where loudness jumps after a quieter stretch.
-2. It offsets the song so that drop lands on the reveal frame.
-3. It snaps three other moments to beats: the question card, the instant the rolling amount
-   lands, and the final 「你敢买吗？」 hit.
-4. It adds a low-pass build-up during the 2.6 s thinking pause and ducks the music under big
-   sound effects.
+- `FIT_VIDEO=1`: the song plays from 0:00 and the video is retimed (slightly faster scrolling)
+  so the amount reveal lands exactly on the song's drop.
+- `DROP_EXACT=102.50`: the moment the song bursts back in after its near-silence.
+- `bgm.py` snaps three other moments to beats: the question card, the instant the rolling
+  amount lands, and the final 「你敢买吗？」 hit. It also ducks the music under big sound effects.
+
+Without `FIT_VIDEO`, the song is offset instead, so its strongest drop hits the reveal at the default timing.
 
 ## Build
 

@@ -96,14 +96,24 @@ def analyze(song_path):
         kick = low[min(len(low) - 1, int(round(b / (times[1] - times[0]))))]
         cands.append(dict(t=float(b), score=float(after - before + 0.002 * kick), after=float(after), before=float(before)))
     cands.sort(key=lambda c: -c['score'])
-    if os.environ.get('DROP'):
+    if os.environ.get('DROP_EXACT'):
+        # an exact drop time (seconds into the song), with the beat grid refit locally around it
+        drop = float(os.environ['DROP_EXACT'])
+        beats = drop + np.arange(-int(drop / period) - 1, int((L - drop) / period) + 1) * period
+        downbeats = beats[(np.round((beats - drop) / period).astype(int)) % 4 == 0]
+    elif os.environ.get('DROP'):
         want = float(os.environ['DROP'])
         drop = min(beats, key=lambda b: abs(b - want))
     else:
         # prefer a strong drop that lets the song cover the whole video without looping
         good = [c for c in cands[:8] if c['t'] - t_rev >= 0 and c['t'] - t_rev + T <= L]
         drop = (good[0] if good else cands[0])['t']
-    offset = drop - t_rev                       # song time = video time + offset
+    if os.environ.get('FIT_VIDEO'):
+        # keep the song from its start (or BGM_START) and retime the video instead
+        offset = float(os.environ.get('BGM_START', '0'))
+        t_rev = drop - offset
+    else:
+        offset = drop - t_rev                   # song time = video time + offset
     loop = not (offset >= 0 and offset + T <= L)
     bv = beats - offset
     info = dict(song=os.path.abspath(song_path), song_len=L, bpm=60 / period, beat_period=period,
@@ -111,6 +121,9 @@ def analyze(song_path):
                 beats_video=[float(b) for b in bv if -1 < b < T + 4],
                 downbeats_video=[float(b - offset) for b in downbeats if -1 < b - offset < T + 4],
                 candidates=cands[:8])
+    if os.environ.get('FIT_VIDEO'):
+        info['target_rev'] = float(t_rev)
+        info['own_breakdown'] = True                # the song already goes quiet before its drop
     if loop:
         # loop on whole bars so the beat grid continues seamlessly
         bars = int((L - downbeats[0] - 2) / (4 * period))
@@ -154,7 +167,7 @@ def mix():
     # build-up into the drop: low-pass sweep + dip over the thinking pause, full band at the drop
     t0, t1 = E['q'] + 0.6, E['rev']
     m = (t >= t0 - 0.5) & (t < t1)
-    if m.any() and not info.get('native'):           # an original score already has its own build-up
+    if m.any() and not info.get('native') and not info.get('own_breakdown'):
         seg = bgm[m]
         lpd = signal.sosfilt(signal.butter(2, 900, 'low', fs=SR, output='sos'), seg, axis=0)
         u = np.clip((t[m] - (t0 - 0.5)) / 0.5, 0, 1)[:, None]

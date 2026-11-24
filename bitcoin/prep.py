@@ -209,7 +209,8 @@ def build_timeline(first_day, prices):
     kd = np.array([day(a) for a, _ in BASE_SPEED], float)
     kv = np.log(np.array([v for _, v in BASE_SPEED], float))
     base = np.exp(np.interp(Dg, kd, kv)) * 1.3
-    dens = 1.0 / base
+    base_dens = 1.0 / base
+    dens = np.zeros_like(Dg)                               # dwell (slow motion) part
     for e in EVENTS:
         if e['kind'] == 'info' and e['H'] <= 1.4 and not e.get('_trim'):
             e['H'] = round(e['H'] * 0.88, 2); e['_trim'] = True
@@ -223,7 +224,18 @@ def build_timeline(first_day, prices):
         dens = dens + norm * np.exp(-0.5 * (x / sig) ** 2)
         if e.get('hold'):                                   # linger right after the event
             dens = dens + e['hold'] / (math.sqrt(2 * math.pi) * 0.45) * np.exp(-0.5 * ((x - 0.1) / 0.45) ** 2)
-    # smooth arrival at "now": decelerate to zero
+    # optional retiming so the amount reveal lands exactly on a music drop
+    target = json.load(open(SYNC)).get('target_rev') if os.path.exists(SYNC) else None
+    integ = lambda a: float(np.sum((a[1:] + a[:-1]) * 0.5 * step))
+    if target:
+        T_need = target - INTRO - END['q'] - END['q_in'] - END['pause']
+        k_dwell = 0.95
+        k_base = integ(base_dens) / max(1e-6, T_need - k_dwell * integ(dens))
+        assert 0.8 < k_base < 3.0, ('cannot retime to', target, k_base)
+        dens = base_dens / k_base + dens * k_dwell
+        print('retimed: base speed x%.3f, dwell x%.2f -> reveal at %.2fs' % (k_base, k_dwell, target), file=sys.stderr)
+    else:
+        dens = base_dens + dens
     tg = np.concatenate([[0], np.cumsum((dens[1:] + dens[:-1]) * 0.5 * step)])
     T_run = tg[-1]
     ending = ending_times(INTRO + T_run)
