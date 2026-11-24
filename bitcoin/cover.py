@@ -37,6 +37,24 @@ def glow_text(base, xy, runs, font):
     base.alpha_composite(layer.filter(ImageFilter.GaussianBlur(18)))
 
 
+TXT = {
+    'zh': dict(kicker='比特币 · 17 年生命线', l1=[('1万元', ORANGE), ('买比特币', WHITE)], l2=[('现在值多少？', WHITE)],
+               sub='涨过 1.6 亿倍，又跌回一半', disc='历史不代表未来 · 不构成投资建议'),
+    'en': dict(kicker='BITCOIN · A 17-YEAR LIFELINE', l1=[('¥10,000', ORANGE), (' in Bitcoin', WHITE)], l2=[("What's it worth now?", WHITE)],
+               sub='Up 160 million times, then back below half', disc='Past performance is no guarantee of future results · Not investment advice'),
+}
+L = TXT['zh']
+
+
+def fit(d, runs, size, maxw):
+    while size > 40:
+        f = F(BLACK, size)
+        if sum(d.textlength(s, font=f) for s, _ in runs) <= maxw:
+            return f
+        size -= 4
+    return F(BLACK, size)
+
+
 def portrait(still, out):
     W, H = 1080, 1440
     img = Image.new('RGBA', (W, H), (5, 8, 20, 255))
@@ -61,20 +79,24 @@ def portrait(still, out):
     d = ImageDraw.Draw(img)
     # kicker
     d.rectangle((72, 118, 80, 160), fill=ORANGE)
-    d.text((100, 112), '比特币 · 17 年生命线', font=F(MED, 40), fill=SOFT)
+    d.text((100, 112), L['kicker'], font=F(MED, 40), fill=SOFT)
     # title
-    big = F(BLACK, 148)
-    glow_text(img, (64, 190), [('1万元', ORANGE), ('买比特币', WHITE)], big)
+    big = min(fit(d, L['l1'], 148, W - 120), fit(d, L['l2'], 148, W - 120), key=lambda f: f.size)
+    glow_text(img, (64, 190), L['l1'], big)
     d = ImageDraw.Draw(img)
-    text_runs(d, (64, 190), [('1万元', ORANGE), ('买比特币', WHITE)], big)
-    text_runs(d, (64, 375), [('现在值多少？', WHITE)], big)
+    text_runs(d, (64, 190), L['l1'], big)
+    text_runs(d, (64, 190 + int(big.size * 1.25)), L['l2'], big)
     # subtitle
-    d.line((72, 600, 500, 600), fill=(255, 155, 46, 160), width=3)
-    text_runs(d, (70, 625), [('涨过 1.6 亿倍，又跌回一半', SOFT)], F(MED, 48), shadow=True)
+    yb = 190 + int(big.size * 2.45) + 30
+    d.line((72, yb, 500, yb), fill=(255, 155, 46, 160), width=3)
+    sf = F(MED, 48)
+    while d.textlength(L['sub'], font=sf) > W - 130:
+        sf = F(MED, sf.size - 2)
+    text_runs(d, (70, yb + 25), [(L['sub'], SOFT)], sf, shadow=True)
     # footer
     d.text((72, H - 78), '2009 – 2026', font=F(BAR, 44), fill=(255, 214, 160))
-    small = F(MED, 22)
-    s = '历史不代表未来 · 不构成投资建议'
+    small = F(MED, 22 if L is TXT['zh'] else 16)
+    s = L['disc']
     d.text((W - 40 - d.textlength(s, font=small), H - 62), s, font=small, fill=(255, 255, 255, 150))
     img.convert('RGB').save(out, quality=95)
 
@@ -99,17 +121,21 @@ def landscape(still, out):
     img.paste(art, (W - aw + 40, H - art.height), ImageChops.multiply(mask, left))
     d = ImageDraw.Draw(img)
     d.rectangle((96, 118, 104, 156), fill=ORANGE)
-    d.text((124, 112), '比特币 · 17 年生命线', font=F(MED, 38), fill=SOFT)
-    big = F(BLACK, 128)
-    glow_text(img, (88, 180), [('1万元', ORANGE), ('买比特币', WHITE)], big)
+    d.text((124, 112), L['kicker'], font=F(MED, 38), fill=SOFT)
+    big = min(fit(d, L['l1'], 128, 1000), fit(d, L['l2'], 128, 1000), key=lambda f: f.size)
+    glow_text(img, (88, 180), L['l1'], big)
     d = ImageDraw.Draw(img)
-    text_runs(d, (88, 180), [('1万元', ORANGE), ('买比特币', WHITE)], big)
-    text_runs(d, (88, 340), [('现在值多少？', WHITE)], big)
-    d.line((96, 548, 520, 548), fill=(255, 155, 46, 160), width=3)
-    text_runs(d, (94, 570), [('涨过 1.6 亿倍，又跌回一半', SOFT)], F(MED, 44))
+    text_runs(d, (88, 180), L['l1'], big)
+    text_runs(d, (88, 180 + int(big.size * 1.25)), L['l2'], big)
+    yb = 180 + int(big.size * 2.45) + 34
+    d.line((96, yb, 520, yb), fill=(255, 155, 46, 160), width=3)
+    sf = F(MED, 44)
+    while d.textlength(L['sub'], font=sf) > 560:
+        sf = F(MED, sf.size - 2)
+    text_runs(d, (94, yb + 22), [(L['sub'], SOFT)], sf)
     d.text((96, H - 92), '2009 – 2026', font=F(BAR, 44), fill=(255, 214, 160))
-    small = F(MED, 22)
-    s = '历史不代表未来 · 不构成投资建议'
+    small = F(MED, 22 if L is TXT['zh'] else 18)
+    s = L['disc']
     d.text((W - 40 - d.textlength(s, font=small), H - 44), s, font=small, fill=(255, 255, 255, 150))
     img.convert('RGB').save(out, quality=95)
 
@@ -117,6 +143,9 @@ def landscape(still, out):
 if __name__ == '__main__':
     still = Image.open(sys.argv[1]).convert('RGBA')
     os.makedirs(os.path.join(HERE, 'output'), exist_ok=True)
-    portrait(still, os.path.join(HERE, 'output', 'cover_3x4.jpg'))
-    landscape(still, os.path.join(HERE, 'output', 'cover_16x9.jpg'))
-    print('wrote output/cover_3x4.jpg, output/cover_16x9.jpg')
+    lang = os.environ.get('VLANG', 'zh')
+    L = TXT[lang]
+    sfx = '' if lang == 'zh' else '_' + lang
+    portrait(still, os.path.join(HERE, 'output', 'cover_3x4%s.jpg' % sfx))
+    landscape(still, os.path.join(HERE, 'output', 'cover_16x9%s.jpg' % sfx))
+    print('wrote covers', lang)

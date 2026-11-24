@@ -31,7 +31,28 @@ function fmtPrice(p) {
 }
 function dayToDate(d) { const t = Date.UTC(2009, 0, 3) + Math.floor(d) * 86400000; return new Date(t); }
 function ymStr(d) { const x = dayToDate(d); return x.getUTCFullYear() + '.' + String(x.getUTCMonth() + 1).padStart(2, '0'); }
-function cnDate(iso) { const [y, m, dd] = iso.split('-').map(Number); return `${y}年${m}月${dd}日`; }
+const STR = {
+  zh: { ath: '历史新高', milestone: '里程碑', start: '起点', now: '现在', fromHigh: '较最高点 ', noPrice: '暂无价格',
+        overview: '17 年，从 {$0.00076} 到 {$126,200}', invest: '假如 2010 年 7 月买入 {1 万元} 比特币',
+        hudTitle: '比特币 BTC · 美元价格 · 对数刻度', hudAth: '历史最高', hudDd: '较最高点', newHigh: '新高',
+        half: '最高点的一半  ', athLine: '历史最高  ', final1: '现在再次回到不到一半的价格，', final1hl: [6, 9], final2: '你敢买吗？',
+        bought: '买入 ¥10,000', q: ['现在值', '多少钱', '？'], think: '想一想',
+        disclaimer: '历史不代表未来 · 不构成投资建议',
+        fx: '按 2010年7月 与 2026年11月 汇率折算 · 未计手续费' },
+  en: { ath: 'ALL-TIME HIGH', milestone: 'MILESTONE', start: 'GENESIS', now: 'NOW', fromHigh: '', noPrice: 'No price yet',
+        overview: '17 years: from {$0.00076} to {$126,200}', invest: "If you'd put {¥10,000} into Bitcoin in July 2010",
+        hudTitle: 'Bitcoin (BTC) · USD · log scale', hudAth: 'All-time high', hudDd: 'From the high', newHigh: 'NEW HIGH',
+        half: 'Half of the high  ', athLine: 'All-time high  ', final1: "Now it's back below half its peak.", final1hl: [3, 4], final2: 'Do you dare to buy?',
+        bought: 'Bought ¥10,000', q: ["What's it ", 'worth', ' now?'], think: 'Think about it',
+        disclaimer: 'Past performance is no guarantee of future results · Not investment advice',
+        fx: 'Converted at Jul 2010 and Nov 2026 exchange rates · fees not included' },
+};
+const tr = k => STR[(TL && TL.lang) || 'zh'][k];
+const EN_MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function cnDate(iso) {
+  const [y, m, dd] = iso.split('-').map(Number);
+  return TL.lang === 'en' ? `${EN_MONTH[m - 1]} ${dd}, ${y}` : `${y}年${m}月${dd}日`;
+}
 
 // ECG beats before the genesis block (offset in decades)
 const BEATS = [-178, -86, 0];
@@ -150,11 +171,11 @@ function prepEvents() {
   for (const e of EV) {
     e.tend = e.kind === 'now' ? T_NOW + 2.6 : e.ta + Math.max(2.3, e.H + 1.0);
     e.lp = lpAt(e.day);
-    if (e.kind === 'peak') e.badge = '历史新高';
+    if (e.kind === 'peak') e.badge = tr('ath');
     else if (e.kind === 'bottom') e.badge = Math.round(e.dd * 100) + '%';
-    else if (e.kind === 'milestone') e.badge = '里程碑';
-    else if (e.kind === 'start') e.badge = '起点';
-    else if (e.kind === 'now') e.badge = '现在';
+    else if (e.kind === 'milestone') e.badge = tr('milestone');
+    else if (e.kind === 'start') e.badge = tr('start');
+    else if (e.kind === 'now') e.badge = tr('now');
     // where the card sits vertically: head height at appearance
     const c = camAt(frameOf(e.ta + 0.05));
     const hp = projDay(c, F.D[frameOf(e.ta + 0.05)]);
@@ -165,7 +186,8 @@ function prepEvents() {
   const nowE = EV.find(e => e.kind === 'now');
   nowE.title = fmtPrice(Math.pow(10, LOGP[NDAYS - 1]));
   const athMax = Math.max(...ATH);
-  nowE.sub = '较最高点 ' + Math.round((Math.pow(10, LOGP[NDAYS - 1]) / athMax - 1) * 100) + '%';
+  const ddNow = Math.round((Math.pow(10, LOGP[NDAYS - 1]) / athMax - 1) * 100) + '%';
+  nowE.sub = TL.lang === 'en' ? ddNow + ' from the high' : tr('fromHigh') + ddNow;
 }
 
 // ---------------------------------------------------------------- background
@@ -648,7 +670,7 @@ function drawHeadChip(c, t, hp) {
   const date = ymStr(Math.max(0, Dh));
   let pv = Math.pow(10, lpAt(Dh));
   for (const e of EV) if (e.kind === 'peak' && Math.abs(Dh - e.day) < 0.6) pv = e.p;   // show the exact top
-  const price = Dh < FD ? '暂无价格' : fmtPrice(pv);
+  const price = Dh < FD ? tr('noPrice') : fmtPrice(pv);
   ctx.save(); ctx.globalAlpha = a;
   ctx.font = '34px BarlowSemi'; const wd = ctx.measureText(date).width;
   ctx.font = Dh < FD ? '30px NotoBold' : '46px Barlow'; const wp = ctx.measureText(price).width;
@@ -673,7 +695,9 @@ function measureCard(e) {
   ctx.font = titleFont; L.tw = ctx.measureText(e.title).width;
   if (L.tw > 640) { ts = Math.floor(ts * 640 / L.tw); titleFont = `${ts}px NotoBlack`; ctx.font = titleFont; L.tw = ctx.measureText(e.title).width; }
   L.titleFont = titleFont; L.ts = ts;
-  ctx.font = '33px NotoMed'; L.sw = e.sub ? ctx.measureText(e.sub).width : 0;
+  L.subFont = '33px NotoMed';
+  ctx.font = L.subFont; L.sw = e.sub ? ctx.measureText(e.sub).width : 0;
+  if (L.sw > 660) { L.subFont = `${Math.floor(33 * 660 / L.sw)}px NotoMed`; ctx.font = L.subFont; L.sw = ctx.measureText(e.sub).width; }
   L.pw = e.kind === 'start' && e.price ? ctx.measureText(e.price).width : 0;
   ctx.font = '27px NotoBold'; L.bw = e.badge ? ctx.measureText(e.badge).width + 26 : 0;
   L.w = Math.max(L.dw + (L.bw ? L.bw + 16 : 0), L.tw, L.sw, L.pw) + 64;
@@ -704,7 +728,7 @@ function drawCard(e, L, x, y, sc, alpha) {
   ctx.fillText(e.title, 30, yy - (e.kind === 'now' ? 8 : 4));
   yy += Math.round(L.ts * 1.22);
   if (e.sub) {
-    ctx.font = '33px NotoMed'; ctx.fillStyle = e.kind === 'now' ? '#ff8a8a' : 'rgba(255,255,255,0.82)';
+    ctx.font = L.subFont; ctx.fillStyle = e.kind === 'now' ? '#ff8a8a' : 'rgba(255,255,255,0.82)';
     ctx.fillText(e.sub, 30, yy); yy += 48;
   }
   if (L.pw) { ctx.font = '33px NotoMed'; ctx.fillStyle = 'rgba(255,200,150,0.75)'; ctx.fillText(e.price, 30, yy); }
@@ -762,6 +786,7 @@ function drawHeadlineText(s, y, alpha, dy, size = 68) {
   const segs = parseHL(s);
   ctx.font = `${size}px NotoBlack`;
   let total = 0; for (const [txt] of segs) total += ctx.measureText(txt).width;
+  if (total > W - 200) { size = Math.floor(size * (W - 200) / total); ctx.font = `${size}px NotoBlack`; total = 0; for (const [txt] of segs) total += ctx.measureText(txt).width; }
   let x = W / 2 - total / 2;
   ctx.save(); ctx.globalAlpha = alpha; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
   ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 22;
@@ -774,8 +799,8 @@ function drawHeadlineText(s, y, alpha, dy, size = 68) {
 function drawHeadline(t) {
   const chs = TL.chapters.slice();
   chs[0] = Object.assign({}, chs[0], { t: 0.35 });
-  chs.push({ t: T_NOW + 2.3, text: '17 年，从 {$0.00076} 到 {$126,200}' });
-  chs.push({ t: TL.end.q - 0.25, text: '假如 2010 年 7 月买入 {1 万元} 比特币' });
+  chs.push({ t: T_NOW + 2.3, text: tr('overview') });
+  chs.push({ t: TL.end.q - 0.25, text: tr('invest') });
   const endFade = 1 - smooth(TL.end.fin - 0.5, TL.end.fin + 0.1, t);
   for (let k = 0; k < chs.length; k++) {
     const ch = chs[k], next = chs[k + 1];
@@ -798,20 +823,20 @@ function drawHUD(c, t) {
   ctx.fillStyle = g; ctx.fillRect(x, y, 560, 112);
   ctx.fillStyle = '#ff9628'; ctx.fillRect(x, y, 4, 112);
   ctx.font = '19px NotoMed'; ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.textBaseline = 'alphabetic';
-  ctx.fillText('比特币 BTC · 美元价格 · 对数刻度', x, y - 12);
+  ctx.fillText(tr('hudTitle'), x, y - 12);
   ctx.font = '26px NotoMed'; ctx.fillStyle = 'rgba(255,255,255,0.72)';
-  ctx.fillText('历史最高', x + 24, y + 36); ctx.fillText('较最高点', x + 300, y + 36);
+  ctx.fillText(tr('hudAth'), x + 24, y + 36); ctx.fillText(tr('hudDd'), x + 300, y + 36);
   let athTxt = '—', ddTxt = '—', ddCol = '#fff';
   if (Dh >= FD) {
     const i = clamp(Math.floor(Dh - FD), 0, NDAYS - 1);
     const p = Math.pow(10, lpAt(Dh)), ath = Math.max(ATH[i], p);
     athTxt = fmtPrice(ath);
     const dd = p / ath - 1;
-    if (dd > -0.005) { ddTxt = '新高'; ddCol = '#ffb04a'; }
+    if (dd > -0.005) { ddTxt = tr('newHigh'); ddCol = '#ffb04a'; }
     else { ddTxt = (dd * 100).toFixed(0) + '%'; ddCol = dd < -0.3 ? '#ff5a5a' : '#ff9a8a'; }
   }
   ctx.font = '56px Barlow'; ctx.fillStyle = '#fff'; ctx.fillText(athTxt, x + 24, y + 96);
-  ctx.fillStyle = ddCol; ctx.font = ddTxt === '新高' ? '46px NotoBlack' : '56px Barlow'; ctx.fillText(ddTxt, x + 300, y + 96);
+  ctx.fillStyle = ddCol; ctx.font = ddTxt === tr('newHigh') ? (TL.lang === 'en' ? '40px NotoBlack' : '46px NotoBlack') : '56px Barlow'; ctx.fillText(ddTxt, x + 300, y + 96);
   ctx.restore();
 }
 
@@ -830,12 +855,12 @@ function drawEndLines(c, t) {
   if (Hh && H2) {
     dashedPath(Hh, { x: lerp(Hh.x, H2.x, grow), y: lerp(Hh.y, H2.y, grow) }, [255, 255, 255], 0.55 * a, 2);
     ctx.font = '26px NotoBold'; ctx.fillStyle = `rgba(255,255,255,${0.85 * a * grow})`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    const s2 = '最高点的一半  ' + fmtPrice(athE.p / 2);
+    const s2 = tr('half') + fmtPrice(athE.p / 2);
     ctx.fillText(s2, Math.min(H2.x + 14, W - ctx.measureText(s2).width - 30), H2.y - 20);
   }
   if (A2) {
     ctx.font = '26px NotoBold'; ctx.fillStyle = `rgba(255,214,150,${0.9 * a * grow})`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    const s1 = '历史最高  ' + fmtPrice(athE.p);
+    const s1 = tr('athLine') + fmtPrice(athE.p);
     ctx.fillText(s1, Math.min(A2.x + 14, W - ctx.measureText(s1).width - 30), A2.y - 20);
   }
   if (N && Q) {
@@ -852,17 +877,20 @@ function drawFinal(t) {
   g.addColorStop(0, `rgba(2,3,8,${0.55 * dim})`); g.addColorStop(1, `rgba(0,0,0,${0.85 * dim})`);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   // line 1, revealed character by character
-  const l1 = '现在再次回到不到一半的价格，';
-  const t1 = TL.end.fin + 0.35;
+  const en = TL.lang === 'en';
+  const l1 = tr('final1'), [h0, h1] = tr('final1hl');
+  const toks = en ? l1.split(/(?<= )/) : [...l1];          // English: word by word, Chinese: char by char
+  const t1 = TL.end.fin + 0.35, stag = en ? 0.15 : 0.075;
   ctx.save(); ctx.font = '76px NotoBlack'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-  const widths = [...l1].map(ch => ctx.measureText(ch).width);
-  const total = widths.reduce((s, v) => s + v, 0);
+  let widths = toks.map(ch => ctx.measureText(ch).width);
+  let total = widths.reduce((s, v) => s + v, 0);
+  if (total > W - 200) { const f = Math.floor(76 * (W - 200) / total); ctx.font = `${f}px NotoBlack`; widths = toks.map(ch => ctx.measureText(ch).width); total = widths.reduce((s, v) => s + v, 0); }
   let x = W / 2 - total / 2;
-  [...l1].forEach((ch, k) => {
-    const tk = t1 + k * 0.075;
+  toks.forEach((ch, k) => {
+    const tk = t1 + k * stag;
     const u = smooth(tk, tk + 0.35, t);
     if (u > 0) {
-      ctx.globalAlpha = u; ctx.fillStyle = (k >= 6 && k <= 9) ? '#ff9b2e' : '#fff';
+      ctx.globalAlpha = u; ctx.fillStyle = (k >= h0 && k <= h1) ? '#ff9b2e' : '#fff';
       ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 20;
       ctx.fillText(ch, x, H * 0.39 + (1 - u) * 26);
     }
@@ -879,9 +907,10 @@ function drawFinal(t) {
     ctx.save(); ctx.translate(W / 2 + (hash(Math.floor(t * 60)) - 0.5) * shake, H * 0.6 + (hash(Math.floor(t * 60) + 7) - 0.5) * shake);
     ctx.scale(sc, sc);
     ctx.font = '168px NotoBlack'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    { const w2 = ctx.measureText(tr('final2')).width; if (w2 > W - 260) ctx.font = `${Math.floor(168 * (W - 260) / w2)}px NotoBlack`; }
     ctx.shadowColor = `rgba(255,140,30,${0.85 * al})`; ctx.shadowBlur = 60;
-    ctx.fillStyle = `rgba(255,155,46,${al})`; ctx.fillText('你敢买吗？', 0, 0);
-    ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = `rgba(255,235,200,${0.6 * al})`; ctx.strokeText('你敢买吗？', 0, 0);
+    ctx.fillStyle = `rgba(255,155,46,${al})`; ctx.fillText(tr('final2'), 0, 0);
+    ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = `rgba(255,235,200,${0.6 * al})`; ctx.strokeText(tr('final2'), 0, 0);
     ctx.restore();
   }
 }
@@ -933,7 +962,7 @@ function drawInvest(c, t) {
     ctx.beginPath(); ctx.arc(B.x, B.y, 14 + 6 * pulse, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = rgba([255, 255, 255], pa); ctx.beginPath(); ctx.arc(B.x, B.y, 5, 0, Math.PI * 2); ctx.fill();
     ctx.font = '34px NotoBlack'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    const lbl = '买入 ¥10,000';
+    const lbl = tr('bought');
     const lw = ctx.measureText(lbl).width + 30;
     const ly = B.y - 30;
     ctx.fillStyle = `rgba(255,170,50,${0.95 * pa})`; roundRect(B.x - lw / 2, ly - 50, lw, 50, 10); ctx.fill();
@@ -958,7 +987,7 @@ function drawInvest(c, t) {
     const size = lerp(100, 46, qUp);
     const y = lerp(by - 10, by - 150, qUp) + (1 - qIn) * 30;
     ctx.font = `${Math.round(size)}px NotoBlack`;
-    const s1 = '现在值', s2 = '多少钱', s3 = '？';
+    const [s1, s2, s3] = tr('q');
     const w1 = ctx.measureText(s1).width, w2 = ctx.measureText(s2).width, w3 = ctx.measureText(s3).width;
     let x = bx - (w1 + w2 + w3) / 2;
     ctx.textAlign = 'left'; ctx.globalAlpha = a * qIn;
@@ -979,7 +1008,7 @@ function drawInvest(c, t) {
       ctx.beginPath(); ctx.arc(rx, ry, 30, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2); ctx.stroke();
       const dots = Math.floor((t - tp0) * 2.5) % 4;
       ctx.font = '30px NotoBold'; ctx.textAlign = 'center'; ctx.fillStyle = `rgba(255,255,255,${0.7 * ra})`;
-      ctx.fillText('想一想' + '.'.repeat(Math.max(0, dots)), rx, ry + 64);
+      ctx.fillText(tr('think') + '.'.repeat(Math.max(0, dots)), rx, ry + 64);
     }
   }
   // amount
@@ -1004,15 +1033,16 @@ function drawInvest(c, t) {
     if (s1a > 0.01) {
       ctx.font = '72px NotoBlack'; ctx.fillStyle = `rgba(255,255,255,${s1a})`;
       ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 20;
-      ctx.fillText('≈ ' + (I.value / 1e8).toFixed(1) + ' 亿元', bx, by + 140);
+      ctx.fillText(TL.lang === 'en' ? '≈ ¥' + (I.value / 1e9).toFixed(2) + ' billion' : '≈ ' + (I.value / 1e8).toFixed(1) + ' 亿元', bx, by + 140);
       ctx.shadowBlur = 0;
     }
     const s2a = a * smooth(E.rev + count + 0.35, E.rev + count + 0.7, t);
     if (s2a > 0.01) {
       ctx.font = '34px NotoMed'; ctx.fillStyle = `rgba(255,214,160,${s2a})`;
-      ctx.fillText('约 ' + (I.coins / 1e4).toFixed(2) + ' 万枚比特币 · 翻了约 ' + Math.round(I.mult / 1e4) + ' 万倍', bx, by + 222);
+      ctx.fillText(TL.lang === 'en' ? 'About ' + (Math.round(I.coins / 100) * 100).toLocaleString('en-US') + ' BTC · up roughly ' + (Math.round(I.mult / 1e3) * 1e3).toLocaleString('en-US') + 'x'
+        : '约 ' + (I.coins / 1e4).toFixed(2) + ' 万枚比特币 · 翻了约 ' + Math.round(I.mult / 1e4) + ' 万倍', bx, by + 222);
       ctx.font = '22px NotoMed'; ctx.fillStyle = `rgba(255,255,255,${0.45 * s2a})`;
-      ctx.fillText('按 2010年7月 与 2026年11月 汇率折算 · 未计手续费', bx, by + 270);
+      ctx.fillText(tr('fx'), bx, by + 270);
     }
   }
   ctx.restore();
@@ -1061,8 +1091,8 @@ function renderFrame(i) {
   if (!CLEAN) {
   ctx.save(); ctx.globalAlpha = 0.6 * smooth(0.4, 1.2, t); ctx.font = '20px NotoMed'; ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-  ctx.strokeText('历史不代表未来 · 不构成投资建议', W - 36, H - 28);
-  ctx.fillStyle = '#fff'; ctx.fillText('历史不代表未来 · 不构成投资建议', W - 36, H - 28);
+  ctx.strokeText(tr('disclaimer'), W - 36, H - 28);
+  ctx.fillStyle = '#fff'; ctx.fillText(tr('disclaimer'), W - 36, H - 28);
   ctx.restore();
   }
   // fade in / out

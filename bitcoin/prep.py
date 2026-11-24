@@ -129,6 +129,64 @@ EVENTS = [
     dict(d='2026-11-24', kind='now', title='现在', sub='', H=0.0, sb=3, sa=1),
 ]
 
+# English text for VLANG=en (same events, same timing)
+EN_EVENTS = {
+    '2009-01-03': ('Bitcoin is born', 'Satoshi mines the Genesis Block', 'No price yet'),
+    '2009-10-05': ('The first price', '$1 buys 1,309 bitcoins'),
+    '2010-05-22': ('Bitcoin Pizza Day', '10,000 BTC for two pizzas'),
+    '2010-07-17': ('10x in 5 days', 'Mt.Gox is about to launch'),
+    '2011-02-09': ('Hits $1 for the first time', 'Parity with the US dollar'),
+    '2011-06-08': ('The first bubble', 'Up 30x in 4 months'),
+    '2011-06-19': ('Mt.Gox gets hacked', 'Panic selling begins'),
+    '2011-11-18': ('Down to $2', 'The first crash'),
+    '2012-11-28': ('The first halving', 'Block reward 50 → 25 BTC'),
+    '2013-04-09': ('Cyprus crisis', 'Safe-haven money pushes it to $230'),
+    '2013-12-04': ('Breaks $1,000', 'Up 80x in one year'),
+    '2013-12-05': ("China's central bank steps in", 'Five agencies warn of Bitcoin risk'),
+    '2014-02-24': ('Mt.Gox collapses', '850,000 BTC vanish'),
+    '2015-01-14': ('Down to $172', 'A long bear market'),
+    '2016-07-09': ('The second halving', 'Block reward 25 → 12.5 BTC'),
+    '2017-09-14': ('China bans ICOs', 'Local exchanges shut down'),
+    '2017-12-17': ('All-time high near $20,000', 'Futures launch, retail mania'),
+    '2018-12-15': ('Down to $3,200', 'The bubble bursts'),
+    '2020-03-12': ('COVID "Black Thursday"', 'Nearly -50% in a single day'),
+    '2020-05-11': ('The third halving', 'Block reward 12.5 → 6.25 BTC'),
+    '2020-12-16': ('Breaks $20,000', 'Institutions start buying'),
+    '2021-02-08': ('Tesla buys $1.5 billion', 'The Musk effect'),
+    '2021-04-14': ('Coinbase goes public', 'Hits $64,800'),
+    '2021-05-19': ('The May 19 crash', 'Crackdown, miners forced out of China'),
+    '2021-07-20': ('Down to $30,000', 'Cut in half'),
+    '2021-11-10': ('All-time high $69,000', 'The second peak'),
+    '2022-05-09': ('LUNA collapses', 'Wiped out in a week'),
+    '2022-11-21': ('FTX implodes', "The world's No.2 exchange goes bust"),
+    '2023-03-10': ('Silicon Valley Bank fails', 'Bitcoin rallies against the tide'),
+    '2024-01-10': ('US spot ETFs approved', 'Wall Street officially arrives'),
+    '2024-03-14': ('All-time high $73,800', 'ETFs keep buying'),
+    '2024-04-20': ('The fourth halving', 'Block reward 6.25 → 3.125 BTC'),
+    '2024-11-05': ('Trump wins', 'Promises a "crypto capital"'),
+    '2024-12-05': ('Breaks $100,000', '16 years, from zero to 100K'),
+    '2025-03-06': ('US Strategic Bitcoin Reserve', 'Signed by executive order'),
+    '2025-04-07': ('Tariff shock', 'Briefly down to $74,000'),
+    '2025-10-06': ('All-time high $126,200', '160 million times its first price'),
+    '2025-10-10': ('Largest liquidation ever', '$19 billion wiped out in a day'),
+    '2026-02-05': ('Down to $63,000', 'Half gone in three months'),
+    '2026-06-05': ('Below $60,000', 'Record ETF outflows'),
+    '2026-09-21': ('Rebounds to $85,000', 'Money briefly flows back'),
+    '2026-11-21': ('Another plunge in November', 'Nearly $5B pulled from ETFs in a month'),
+    '2026-11-24': ('Now', ''),
+}
+EN_CHAPTERS = {
+    '比特币的{生命线}': "Bitcoin's {Lifeline}", '一文不值的{年代}': 'When It Was {Worthless}',
+    '第一次{泡沫}': 'The First {Bubble}', '第一次{崩盘}': 'The First {Crash}', '{卷土}重来': 'The {Comeback}',
+    '{千元}时代': 'The {$1,000} Era', '漫长的{寒冬}': 'The Long {Winter}', '{牛市}重启': 'The {Bull} Returns',
+    '{全民}疯狂': 'Retail {Mania}', '泡沫{破裂}': 'The Bubble {Bursts}', '熊市{反弹}': 'Bear Market {Bounce}',
+    '疫情{闪崩}': 'Pandemic {Crash}', '{机构}入场': '{Institutions} Arrive', '{监管}重拳': 'Regulatory {Crackdown}',
+    '{二次}冲顶': 'The {Second} Peak', '连环{暴雷}': 'Collapse After {Collapse}', '触底{反弹}': 'Bottoming {Out}',
+    '华尔街{入场}': 'Wall Street {Arrives}', '{十万}美元': '{$100,000}', '{巅峰}时刻': 'The {Peak}',
+    '又一次{腰斩}': 'Cut in {Half} Again',
+}
+VLANG = os.environ.get('VLANG', 'zh')
+
 # headline at the top of the screen; {..} is highlighted in orange
 CHAPTERS = [
     ('2009-01-01', '比特币的{生命线}'),
@@ -481,6 +539,14 @@ def main():
         ev['ta'] = max(ev['t'] - lead, last + 1.0)
         last = ev['ta']
     chapters = [dict(day=day(a), text=s) for a, s in CHAPTERS]
+    if VLANG == 'en':
+        for ev in evs:
+            tx = EN_EVENTS[ev['d']]
+            ev['title'], ev['sub'] = tx[0], tx[1]
+            if len(tx) > 2:
+                ev['price'] = tx[2]
+        for c in chapters:
+            c['text'] = EN_CHAPTERS[c['text']]
     for c in chapters:
         c['t'] = float(np.interp(c['day'], tl['D'], tl['t']))
     years = []
@@ -502,7 +568,7 @@ def main():
     value = coins * now_p * BUY['cny_usd_now']
     invest = dict(day=day(BUY['d']), date=BUY['d'], rmb=BUY['rmb'], buy_p=buy_p, now_p=now_p,
                   coins=coins, value=value, mult=value / BUY['rmb'])
-    out = dict(rails=rails, end=tl['ending'], invest=invest, 
+    out = dict(rails=rails, end=tl['ending'], invest=invest, lang=VLANG, 
         fps=FPS, nF=tl['nF'], T=tl['T_total'], t_now=tl['t_now'], intro=INTRO,
         KY=KY, fovY=FOV_Y, first_day=int(first_day), D0=D0.isoformat(),
         logp=[round(float(v), 5) for v in logp],
