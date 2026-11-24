@@ -36,6 +36,13 @@ if [ -z "${AUDIO_ONLY:-}" ]; then
   for p in "${pids[@]}"; do wait "$p"; done
 fi
 
+if [ -n "${AUDIO_ONLY:-}" ] && [ -f "$OUT" ]; then
+  # picture unchanged: keep the existing video stream, only replace the sound (takes seconds)
+  ffmpeg -y -loglevel error -i "$OUT" -i "$AUDIO" -map 0:v -map 1:a -c:v copy \
+    -af "acompressor=threshold=-20dB:ratio=2.5:attack=5:release=200:makeup=1.5,loudnorm=I=-15:TP=-1.5:LRA=11,aresample=48000" \
+    -c:a aac -b:a 192k -movflags +faststart -shortest "$OUT.tmp.mp4" && mv "$OUT.tmp.mp4" "$OUT"
+  ffprobe -v error -show_entries format=duration,size -of default=nw=1 "$OUT"; exit 0
+fi
 ffmpeg -y -loglevel error -f concat -safe 0 -i build/segs.txt -i "$AUDIO" \
   -map 0:v -map 1:a -af "acompressor=threshold=-20dB:ratio=2.5:attack=5:release=200:makeup=1.5,loudnorm=I=-15:TP=-1.5:LRA=11,aresample=48000" \
   -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -r 60 \

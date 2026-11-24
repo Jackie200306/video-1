@@ -200,8 +200,8 @@ def typewriter():
 
 # with a BGM underneath, keep the bright "ding" sounds well below the music
 HAS_BGM = os.path.exists(os.path.join(HERE, 'build', 'bgm_sync.json'))
-DING = db(float(os.environ.get('DING_DB', -5))) if HAS_BGM else 1.0
-TICK = db(float(os.environ.get('TICK_DB', -3))) if HAS_BGM else 1.0
+DING = db(float(os.environ.get('DING_DB', -7))) if HAS_BGM else 1.0
+TICK = db(float(os.environ.get('TICK_DB', -4.5))) if HAS_BGM else 1.0
 if HAS_BGM:
     _bell, _shimmer, _tick, _pop, _ecg = bell, shimmer, tick, pop, ecg_beep
     bell = lambda *a, **k: _bell(*a, **k) * DING

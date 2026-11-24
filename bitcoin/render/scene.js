@@ -1022,6 +1022,7 @@ function drawInvest(c, t) {
 }
 
 // ---------------------------------------------------------------- frame
+const CLEAN = /clean/.test(location.search);   // no UI text: for cover art
 function renderFrame(i) {
   const t = i / FPS;
   const c = camAt(i);
@@ -1036,7 +1037,7 @@ function renderFrame(i) {
   const pts = collectPoints(c);
   drawFill(c, pts);
   drawBrackets(c, t);
-  drawEndLines(c, t);
+  if (!CLEAN) drawEndLines(c, t);
   drawLine(c, t, pts);
   drawMarkers(c, t);
   if (hp) drawHead(c, t, hp);
@@ -1045,23 +1046,25 @@ function renderFrame(i) {
   drawRain(t);
   drawBokeh(c, t);
   drawEffects(c, t, hp);
-  drawSlams(c, t);
-  drawCards(c, t);
-  if (hp) drawHeadChip(c, t, hp);
-  drawHeadline(t);
-  drawHUD(c, t);
-  drawInvest(c, t);
-  drawFinal(t);
+  if (!CLEAN) drawSlams(c, t);
+  if (!CLEAN) drawCards(c, t);
+  if (!CLEAN) if (hp) drawHeadChip(c, t, hp);
+  if (!CLEAN) drawHeadline(t);
+  if (!CLEAN) drawHUD(c, t);
+  if (!CLEAN) drawInvest(c, t);
+  if (!CLEAN) drawFinal(t);
   // vignette
   const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.72);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)');
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   // small disclaimer, bottom right, visible for the whole video
+  if (!CLEAN) {
   ctx.save(); ctx.globalAlpha = 0.6 * smooth(0.4, 1.2, t); ctx.font = '20px NotoMed'; ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.6)';
   ctx.strokeText('历史不代表未来 · 不构成投资建议', W - 36, H - 28);
   ctx.fillStyle = '#fff'; ctx.fillText('历史不代表未来 · 不构成投资建议', W - 36, H - 28);
   ctx.restore();
+  }
   // fade in / out
   const fade = Math.max(1 - smooth(0, 0.7, t), smooth(T_END - 0.9, T_END - 0.05, t));
   if (fade > 0) { ctx.fillStyle = `rgba(0,0,0,${fade})`; ctx.fillRect(0, 0, W, H); }

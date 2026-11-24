@@ -28,7 +28,7 @@ function serve() {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   page.on('console', m => { if (m.type() === 'error') console.error('[page]', m.text()); });
   page.on('pageerror', e => console.error('[pageerror]', e.message));
-  await page.goto(`http://127.0.0.1:${port}/render/index.html`);
+  await page.goto(`http://127.0.0.1:${port}/render/index.html${process.env.CLEAN ? '?clean=1' : ''}`);
   await page.waitForFunction('window.READY === true', null, { timeout: 180000 });
 
   if (mode === 'stills') {
