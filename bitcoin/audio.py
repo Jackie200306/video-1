@@ -198,6 +198,18 @@ def typewriter():
     return hp(rng.normal(0, 1, len(t)), 2500) * np.exp(-t / 0.008) * 0.6 + np.sin(2 * np.pi * 300 * t) * np.exp(-t / 0.01) * 0.3
 
 
+# with a BGM underneath, keep the bright "ding" sounds well below the music
+HAS_BGM = os.path.exists(os.path.join(HERE, 'build', 'bgm_sync.json'))
+DING = db(float(os.environ.get('DING_DB', -5))) if HAS_BGM else 1.0
+TICK = db(float(os.environ.get('TICK_DB', -3))) if HAS_BGM else 1.0
+if HAS_BGM:
+    _bell, _shimmer, _tick, _pop, _ecg = bell, shimmer, tick, pop, ecg_beep
+    bell = lambda *a, **k: _bell(*a, **k) * DING
+    shimmer = lambda *a, **k: _shimmer(*a, **k) * DING
+    tick = lambda *a, **k: _tick(*a, **k) * TICK
+    pop = lambda *a, **k: _pop(*a, **k) * TICK
+    ecg_beep = lambda *a, **k: _ecg(*a, **k) * TICK
+
 # ----------------------------------------------------------------- timeline
 fps = TL['fps']
 D = np.array(TL['frames']['D'])
@@ -301,7 +313,7 @@ for _ in range(60):
     i = int(t0 * SR)
     if i + len(s_) < len(coins):
         coins[i:i + len(s_)] += s_ * rng.uniform(0.2, 0.5)
-add(coins, tl_ + 0.05, -16, pan=-0.1, send=0.3)
+add(coins * DING, tl_ + 0.05, -16, pan=-0.1, send=0.3)
 # back down to the present, final line, "你敢买吗？"
 add(whoosh(1.6, 2500, 200), E['fin'] - 0.4, -19, send=0.3)
 for kk in range(14):

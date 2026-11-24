@@ -163,7 +163,7 @@ def mix():
     blk = int(0.4 * SR)
     r = np.sqrt(np.mean(bgm[: len(bgm) // blk * blk].reshape(-1, blk, 2) ** 2, axis=(1, 2)))
     level = np.percentile(r[r > 1e-4], 70) if np.any(r > 1e-4) else 1
-    bgm *= (0.2 if info.get('native') else 0.16) / level
+    bgm *= (0.2 if info.get('native') else 0.19) / level
     # build-up into the drop: low-pass sweep + dip over the thinking pause, full band at the drop
     t0, t1 = E['q'] + 0.6, E['rev']
     m = (t >= t0 - 0.5) & (t < t1)
@@ -177,7 +177,7 @@ def mix():
     att, rel = math.exp(-1 / (0.005 * SR)), math.exp(-1 / (0.35 * SR))
     e = signal.lfilter([1 - rel], [1, -rel], env)            # release smoothing
     ref = np.percentile(env, 99.5) + 1e-6
-    duck = 1 - 0.55 * np.clip(e / ref, 0, 1)
+    duck = 1 - float(os.environ.get('DUCK', 0.4)) * np.clip(e / ref, 0, 1)
     bgm *= duck[:, None]
     # fades
     bgm *= np.clip(t / 0.8, 0, 1)[:, None] * np.clip((T - t) / 2.5, 0, 1)[:, None]
