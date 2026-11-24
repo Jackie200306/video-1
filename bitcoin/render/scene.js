@@ -813,9 +813,6 @@ function drawHUD(c, t) {
   ctx.font = '56px Barlow'; ctx.fillStyle = '#fff'; ctx.fillText(athTxt, x + 24, y + 96);
   ctx.fillStyle = ddCol; ctx.font = ddTxt === '新高' ? '46px NotoBlack' : '56px Barlow'; ctx.fillText(ddTxt, x + 300, y + 96);
   ctx.restore();
-  ctx.save(); ctx.globalAlpha = a * 0.55; ctx.font = '18px NotoMed'; ctx.fillStyle = '#fff'; ctx.textAlign = 'right';
-  ctx.fillText('历史数据回顾 · 不构成投资建议', W - 40, H - 30);
-  ctx.restore();
 }
 
 // ---------------------------------------------------------------- ending
@@ -1059,6 +1056,12 @@ function renderFrame(i) {
   const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.72);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)');
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  // small disclaimer, bottom right, visible for the whole video
+  ctx.save(); ctx.globalAlpha = 0.6 * smooth(0.4, 1.2, t); ctx.font = '20px NotoMed'; ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+  ctx.strokeText('历史不代表未来 · 不构成投资建议', W - 36, H - 28);
+  ctx.fillStyle = '#fff'; ctx.fillText('历史不代表未来 · 不构成投资建议', W - 36, H - 28);
+  ctx.restore();
   // fade in / out
   const fade = Math.max(1 - smooth(0, 0.7, t), smooth(T_END - 0.9, T_END - 0.05, t));
   if (fade > 0) { ctx.fillStyle = `rgba(0,0,0,${fade})`; ctx.fillRect(0, 0, W, H); }
