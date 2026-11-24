@@ -2,6 +2,7 @@
 # Full pipeline: data/timeline -> (BGM beat sync) -> SFX -> parallel frame render -> final mp4.
 #   ./build.sh                      SFX only
 #   BGM=path/to/song.mp3 ./build.sh  beat-synced BGM: the song's drop lands on the amount reveal
+#   MUSIC=1 ./build.sh               original royalty-free score (music.py), drop on the amount reveal
 #   AUDIO_ONLY=1 ...                 re-mix audio onto the last rendered frames (no re-render)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -16,9 +17,13 @@ AUDIO=build/sfx.wav
 if [ -n "${BGM:-}" ]; then
   python3 bgm.py analyze "$BGM"           # tempo, beats, drop -> song offset
   python3 prep.py > build/timeline.log    # snap question / landing / final hit to the beat grid
+elif [ -n "${MUSIC:-}" ]; then            # original score composed to the timeline (royalty-free)
+  python3 music.py grid
+  python3 prep.py > build/timeline.log
+  python3 music.py render
 fi
 python3 audio.py
-if [ -n "${BGM:-}" ]; then python3 bgm.py mix; AUDIO=build/mix.wav; fi
+if [ -n "${BGM:-}${MUSIC:-}" ]; then python3 bgm.py mix; AUDIO=build/mix.wav; fi
 
 if [ -z "${AUDIO_ONLY:-}" ]; then
   NF=$(python3 -c "import json;print(json.load(open('build/timeline.json'))['nF'])")

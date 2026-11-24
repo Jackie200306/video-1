@@ -184,9 +184,15 @@ def ending_times(t_now):
         def snap(x, lo, hi):
             c = beats[(beats >= x + lo) & (beats <= x + hi)]
             return float(c[np.argmin(np.abs(c - x))]) if len(c) else x
+        sy = json.load(open(SYNC))
         q = snap(q, -0.45, 0.4)
-        fin = snap(fin, -0.4, 0.45)
-        slam = snap(fin + END['line_gap'], -0.45, 0.45)
+        if sy.get('downbeats_video'):                 # land the big text moments on bar lines
+            beats = np.array(sy['downbeats_video'])
+            fin = snap(fin, -0.8, 0.8)
+            slam = snap(fin + END['line_gap'], -0.6, 0.9)
+        else:
+            fin = snap(fin, -0.4, 0.45)
+            slam = snap(fin + END['line_gap'], -0.45, 0.45)
     count = END['count']
     if os.path.exists(SYNC):
         bp = json.load(open(SYNC))['beat_period']

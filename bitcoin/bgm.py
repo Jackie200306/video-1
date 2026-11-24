@@ -150,11 +150,11 @@ def mix():
     blk = int(0.4 * SR)
     r = np.sqrt(np.mean(bgm[: len(bgm) // blk * blk].reshape(-1, blk, 2) ** 2, axis=(1, 2)))
     level = np.percentile(r[r > 1e-4], 70) if np.any(r > 1e-4) else 1
-    bgm *= 0.16 / level
+    bgm *= (0.2 if info.get('native') else 0.16) / level
     # build-up into the drop: low-pass sweep + dip over the thinking pause, full band at the drop
     t0, t1 = E['q'] + 0.6, E['rev']
     m = (t >= t0 - 0.5) & (t < t1)
-    if m.any():
+    if m.any() and not info.get('native'):           # an original score already has its own build-up
         seg = bgm[m]
         lpd = signal.sosfilt(signal.butter(2, 900, 'low', fs=SR, output='sos'), seg, axis=0)
         u = np.clip((t[m] - (t0 - 0.5)) / 0.5, 0, 1)[:, None]

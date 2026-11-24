@@ -306,7 +306,8 @@ add(coins, tl_ + 0.05, -16, pan=-0.1, send=0.3)
 add(whoosh(1.6, 2500, 200), E['fin'] - 0.4, -19, send=0.3)
 for kk in range(14):
     add(typewriter(), E['fin'] + 0.35 + kk * 0.075, -26, pan=(kk - 7) / 14)
-for kk, tb in enumerate(np.arange(E['fin'] + 0.2, E['end'] - 0.3, 0.92)):
+hb_period = json.load(open(os.path.join(HERE, 'build', 'bgm_sync.json')))['beat_period'] * 2 if HAS_BGM else 0.92
+for kk, tb in enumerate(np.arange(E['fin'] + (0 if HAS_BGM else 0.2), E['end'] - 0.3, hb_period)):
     if abs(tb - E['slam']) > 0.25:
         add(heartbeat(1.0), tb, -9 - max(0, kk - 5) * 2 - (6 if HAS_BGM else 0))
 add(impact(1.1), E['slam'], -6, send=0.5)
