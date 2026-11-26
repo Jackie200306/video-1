@@ -41,7 +41,11 @@ function goldFill(y0, y1) {
 const lineCol = c => mixc(GOLD, JADE, c);
 
 // ---------------------------------------------------------------- data
-let TL, FPS, S, N, HK, PEAK, NOW, DATE0, NF, DD;
+let TL, FPS, S, N, HK, PEAK, NOW, DATE0, NF, DD, TFX;
+// effect clock: runs at 1/4 speed from the slow-motion cue to the burst, then snaps back
+function slowRate(t) { return t >= HK.drop ? 1 : lerp(1, 0.25, smooth(HK.slowmo - 0.05, HK.slowmo + 0.35, t)); }
+function prepTfx() { TFX = new Float64Array(NF + 2); let a = 0; for (let i = 0; i < NF + 2; i++) { TFX[i] = a; a += slowRate(i / FPS) / FPS; } }
+const tfx = t => { const x = clamp(t * FPS, 0, NF), i = Math.floor(x), f = x - i; return lerp(TFX[i], TFX[i + 1], f); };
 const dayIdx = iso => Math.round((Date.parse(iso) - DATE0) / 86400000);
 function pAt(x) { const i = clamp(Math.floor(x), 0, N - 1), j = Math.min(N - 1, i + 1), f = clamp(x - i, 0, 1); return lerp(S.cny[i], S.cny[j], f); }
 function uAt(x) { const i = clamp(Math.floor(x), 0, N - 1), j = Math.min(N - 1, i + 1), f = clamp(x - i, 0, 1); return lerp(S.usd[i], S.usd[j], f); }
@@ -111,16 +115,16 @@ function buildCamera() {
     // push in on the high, pull back at the burst
     // camera moves (log zoom): wide open -> creeping push-in with beat kicks -> crash zoom on the high
     // -> blown back by the burst -> punch on the landing -> pulled wide by the rewind -> punch on 2023
-    let z = -0.45 * (1 - smooth(0, 2.4, t));
+    let z = -0.45 * (1 - smooth(0, 3.0, t));
     z += 0.22 * smooth(0.6, HK.peakTag, t) * (1 - smooth(D - 0.01, D + 0.02, t));
-    for (const k of [-10, -8, -6, -5, -4, -3]) { const b = D + k * HK.beat, a = t - b, amp = k <= -8 ? 0.05 : 0.07; if (a > -0.02 && a < 0.6) z += amp * smooth(-0.02, 0.05, a) * Math.exp(-Math.max(0, a - 0.05) / 0.22); }
-    z += (0.48 * smooth(HK.peakTag - 0.04, HK.peakTag + 0.16, t) + 0.10 * smooth(HK.peakTag + 0.2, D, t)) * (1 - smooth(D - 0.01, D + 0.02, t));
+    for (const k of [-14, -12, -10, -8, -6, -5, -4]) { const b = D + k * HK.beat, a = t - b, amp = k <= -8 ? 0.05 : 0.07; if (a > -0.02 && a < 0.6) z += amp * smooth(-0.02, 0.05, a) * Math.exp(-Math.max(0, a - 0.05) / 0.22); }
+    z += 0.58 * Math.pow(smooth(HK.slowmo - 0.1, D, t), 1.2) * (1 - smooth(D - 0.01, D + 0.02, t));
     z -= 0.38 * bump(t, D + 0.06, 0.06, 0.35, 1.1);
     z += 0.34 * bump(t, HK.crashEnd + 0.1, 0.1, 0.22, 0.45);
     z -= 0.30 * bump(t, R0 + 0.7, 0.5, 0.5, 0.7);
     z += 0.30 * bump(t, R1 + 0.06, 0.08, 0.18, 0.9);
     zoom[i] = z;
-    yawT[i] = (20 + 5 * Math.sin(t * 2 * Math.PI / 23)) * Math.PI / 180 - 0.12 * bump(t, HK.peakTag, 1.2, 0.6, 0.8) - 0.10 * smooth(Q, Q + 0.8, t) * (1 - smooth(R0, R0 + 0.6, t)) + 0.10 * bump(t, R0 + 1.0, 0.8, 0.4, 0.8);
+    yawT[i] = (20 + 5 * Math.sin(t * 2 * Math.PI / 23)) * Math.PI / 180 - 0.12 * bump(t, HK.peakTag, 1.2, 0.6, 0.8) - 0.10 * smooth(Q, Q + 0.8, t) * (1 - smooth(R0, R0 + 0.6, t)) + 0.10 * bump(t, R0 + 1.0, 0.8, 0.4, 0.8) + 0.16 * smooth(HK.slowmo, D, t) * (1 - smooth(D, D + 0.7, t));
     pitch[i] = (-3 + 1.5 * Math.sin(t * 2 * Math.PI / 31)) * Math.PI / 180;
   }
   // visible price range over the look-back window (with a little look-ahead)
@@ -261,6 +265,7 @@ function drawFloor(c, t) {
   ctx.restore();
 }
 function drawBokeh(c, t) {
+  t = tfx(t);
   const span = W + 600;
   for (let k = 0; k < 20; k++) {
     const depth = 0.6 + 1.4 * hash(k * 4.1), r = 16 + 64 * hash(k * 2.3) * depth;
@@ -412,6 +417,7 @@ function drawPulses(c, t) {
 }
 // twinkles sitting on the recent line
 function drawTwinkles(c, t) {
+  t = tfx(t);
   for (let k = 0; k < 14; k++) {
     const per = 1.6 + hash(k * 3.1), ph = (t / per + hash(k * 7.7)) % 1;
     const cyc = Math.floor(t / per + hash(k * 7.7));
@@ -455,7 +461,7 @@ function drawHead(c, t, hp) {
 
 // ---------------------------------------------------------------- bubble
 function bubbleR(c, t) {
-  const p = pAt(c.D); return (40 + 120 * clamp((p - 760) / (1250 - 760), 0, 1)) * (1 + 0.03 * Math.sin(t * 11) + 0.04 * beatPulse(t));
+  const p = pAt(c.D); return (40 + 120 * clamp((p - 760) / (1250 - 760), 0, 1)) * (1 + 0.03 * Math.sin(tfx(t) * 11) + 0.04 * beatPulse(t));
 }
 function drawBubble(c, t, hp) {
   const D = HK.drop; if (t >= D || t < 0.2 || !hp) return;
@@ -472,7 +478,7 @@ function drawBubble(c, t, hp) {
   ctx.save();
   ctx.strokeStyle = 'rgba(190,146,60,0.5)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
   // a thin gold-to-rose sheen that slides round the rim
-  const cg = ctx.createConicGradient(t * 1.4, cx, cy);
+  const cg = ctx.createConicGradient(tfx(t) * 1.4, cx, cy);
   [['rgba(240,190,90,0)', 0], ['rgba(240,190,90,0.7)', 0.12], ['rgba(255,180,160,0.45)', 0.22], ['rgba(240,190,90,0)', 0.34], ['rgba(240,190,90,0)', 1]].forEach(([s, o]) => cg.addColorStop(o, s));
   ctx.strokeStyle = cg; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r - 2.5, 0, 7); ctx.stroke();
   ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r * 0.8, 3.6, 4.4); ctx.stroke();
@@ -486,7 +492,7 @@ function drawBubble(c, t, hp) {
 let BURST = null;
 function drawParticles(c, t, i) {
   // embers rising off the head in rallies, sparks raining off it in the crash
-  for (let j = i - 70; j <= i; j++) {
+  for (let j = i - 200; j <= i; j++) {
     if (j < 2) continue;
     const Dj = CAM.Dh[j], Dp = CAM.Dh[j - 1];
     const tj = j / FPS, speed = Math.abs(Dj - Dp) * FPS;        // days per second
@@ -495,7 +501,7 @@ function drawParticles(c, t, i) {
     else if (tj >= HK.drop && tj < HK.crashEnd) { n = Math.min(6, speed / 45); fall = true; }
     n = Math.floor(n + hash(j * 1.731)); if (!n) continue;
     if (j / FPS > HK.rewind - 0.05 && j / FPS < HK.y2023) continue;
-    const age = (i - j) / FPS;
+    const age = tfx(i / FPS) - tfx(j / FPS);
     const anchor = proj(c, Dj, wY(c, pAt(Dj))); if (!anchor) continue;
     for (let k = 0; k < n; k++) {
       const h1 = hash(j * 13.1 + k * 7.3), h2 = hash(j * 3.7 + k * 17.9), h3 = hash(j * 9.9 + k * 1.1);
@@ -557,7 +563,7 @@ function drawEffects(c, t) {
     if (age > -0.05 && age < 1.8 && p && t < HK.drop + 0.05) {
       const ra = bump(t, HK.peakTag + 0.05, 0.1, 0.5, 0.6) * 0.55;
       if (ra > 0.01) {
-        const nR = 18, rot = t * 0.4;
+        const nR = 18, rot = tfx(t) * 0.4;
         for (let k = 0; k < nR; k++) {
           const ang = rot + k * Math.PI * 2 / nR, len = (300 + 200 * hash(k + 3)) * (0.6 + 0.4 * easeOutCubic(age / 0.6));
           const g = ctx.createLinearGradient(p.x, p.y, p.x + Math.cos(ang) * len, p.y + Math.sin(ang) * len);
@@ -567,7 +573,7 @@ function drawEffects(c, t) {
           ctx.lineTo(p.x + Math.cos(ang + 0.03) * len, p.y + Math.sin(ang + 0.03) * len); ctx.closePath(); ctx.fill();
         }
       }
-      const u = age / 0.9;
+      const u = (tfx(t) - tfx(HK.peakTag)) / 0.9;
       if (u > 0 && u < 1) { ctx.strokeStyle = rgba(GOLD, (1 - u) * 0.8); ctx.lineWidth = 4 * (1 - u) + 1; ctx.beginPath(); ctx.arc(p.x, p.y, 20 + 380 * easeOutCubic(u), 0, 7); ctx.stroke(); }
       if (age >= 0) flash = Math.max(flash, 0.22 * Math.exp(-age / 0.22));
     }
@@ -728,7 +734,7 @@ function drawHeadline(t) {
     ctx.save(); ctx.globalAlpha = a1;
     const f = F.cn(72), w1 = width('黄金，一路', f), x = 110, y = 170 + 16 * (1 - a1);
     ctx.fillStyle = 'rgba(190,150,70,0.9)'; ctx.fillRect(x, 70, 46, 1.5);
-    text('GOLD  ·  2025 — 2026', x + 60, 79, F.caps(600, 22), rgba(GOLD_D, 1), 'left', 5);
+    text('GOLD  ·  2024 — 2026', x + 60, 79, F.caps(600, 22), rgba(GOLD_D, 1), 'left', 5);
     shadowText('黄金，一路', x, y, f, rgba(INK, 1), 'left', 0, 0.12); goldText('狂飙', x + w1, y, f, 76);
     ctx.restore();
   }
@@ -927,6 +933,7 @@ window.renderFrame = renderFrame;
   await document.fonts.load('600 40px Cormorant', 'GOLDXAUREWINDCHAPTERONE');
   prepStatic();
   prepClimb();
+  prepTfx();
   buildCamera();
   // where the bubble bursts (screen position just before the drop)
   const ib = Math.round(HK.drop * FPS) - 1, cb = camAt(ib), hb = projDay(cb, cb.D);

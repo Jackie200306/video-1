@@ -90,7 +90,7 @@ NOW = SER[-1]
 # Analysed with ../bitcoin/bgm.py onset tools: 112.8 BPM, the first drop at 17.403 s.
 BEAT = 0.5319
 SONG_DROP = 17.403
-HOOK_BEATS_BEFORE_DROP = 12                       # 3 bars: the softer stretch before the breakdown
+HOOK_BEATS_BEFORE_DROP = 16                       # 4 bars: the second half of the song's intro phrase
 SONG_START = SONG_DROP - HOOK_BEATS_BEFORE_DROP * BEAT
 DROP = HOOK_BEATS_BEFORE_DROP * BEAT              # video time of the drop  (3.191 s)
 
@@ -102,22 +102,23 @@ def bt(n):                                        # video time of beat n relativ
 HOOK = dict(
     drop=DROP, beat=BEAT,
     peakTag=bt(-2),          # "历史最高" callout pops
-    crashEnd=bt(3),          # line has fallen to today
-    badge=bt(2),             # -40% badge
+    slowmo=bt(-4),           # slow motion from ¥1,100 into the high, until the burst
+    crashEnd=bt(4),          # line has fallen to today
+    badge=bt(3),             # -40% badge
     title=bt(0),             # 黄金暴跌
-    question=bt(4),          # 现在还能买吗？
-    sub=bt(6),               # 抄底 还是 接飞刀
-    rewind=bt(8),            # time rewinds to 2023
-    y2023=bt(12),            # "2023" slam
+    question=bt(8),          # 现在还能买吗？ (one bar to read the fall)
+    sub=bt(10),              # 抄底 还是 接飞刀
+    rewind=bt(12),           # time rewinds to 2023
+    y2023=bt(16),            # "2023" slam
 )
 # the climb is choreographed on the beat: each round-number level is crossed on a beat
-def first_cross(level, after='2025-01-01'):
+def first_cross(level, after='2024-07-01'):
     for k in range(IDX[after], len(SER)):
         if SER[k][2] >= level:
             return SER[k][0]
-CLIMB = [(-12, '2025-01-01', None)] + [(n, first_cross(l), l) for n, l in ((-10, 700), (-8, 800), (-6, 900), (-4, 1000), (-3, 1100))] + [(-2, PEAK[0], 1200)]
+CLIMB = [(-16, '2024-07-01', None)] + [(n, first_cross(l), l) for n, l in ((-14, 600), (-12, 650), (-10, 700), (-8, 800), (-6, 900), (-5, 1000), (-4, 1100))] + [(-2, PEAK[0], 1200)]
 HOOK['climb'] = [dict(t=bt(n), date=dd, i=IDX[dd], level=l) for n, dd, l in CLIMB]
-T = bt(12) + 1.25
+T = bt(16) + 1.7
 nF = int(round(T * FPS))
 
 TL = dict(

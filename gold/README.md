@@ -11,19 +11,21 @@ camera back, a punch on the landing, and a radial zoom blur on the fast moves.
 
 ## Hook storyboard (beat-synced to 《We Never》, 112.8 BPM)
 
-The song starts 3 bars before its first drop (11.02 s into the song), opening up from a muffled
-low-pass, so the bubble bursts on the drop (17.40 s into the song) at 6.38 s in the video.
+The song starts 4 bars before its first drop (8.89 s into the song, the second half of its
+intro phrase) with a short full-band fade-in, so the bubble bursts on the drop (17.40 s into the
+song) at 8.51 s in the video. During the rewind the music keeps playing forward.
 
 | video time | beat | what happens |
 |---|---|---|
-| 0.00 | −12 | wide shot dollies in; 「黄金，一路狂飙」; the line climbs from Jan 2025 |
-| 1.06 / 2.13 / 3.19 / 4.26 / 4.79 | −10 / −8 / −6 / −4 / −3 | the line breaks ¥700 / ¥800 / ¥900 / ¥1,000 / ¥1,100 exactly on the beat (rail flash, 「突破」, chime, zoom kick) |
-| 5.32 | −2 | 历史最高 ¥1,250/克 · $5,595/盎司 (2026-01-29): crash zoom onto the bubble, rays; music low-passes and pulls back |
-| **6.38** | **drop** | bubble bursts: glass + impact, camera blown back, 「黄金暴跌」, the line falls to today |
-| 7.98 | +3 | landing punch-in: −39.5% · 不到 10 个月，从 ¥1,250 跌到 ¥756 |
-| 8.51 / 9.57 | +4 / +6 | 「现在，还能买吗？」 / 抄底，还是接飞刀？ |
-| 10.64 | +8 | 让我们把时间倒回: the camera flies back along the line (music keeps playing forward) |
-| 12.77 | +12 | 「2023 · 这一轮大涨，要从这一年说起」 |
+| 0.00 | −16 | wide shot dollies in; 「黄金，一路狂飙」; the line climbs from Jul 2024 |
+| 1.06 … 5.85 | −14 −12 −10 −8 −6 −5 | breaks ¥600 / 650 / 700 / 800 / 900 / 1,000 exactly on the beat (rail flash, 「突破」, chime, zoom kick) |
+| 6.38 | −4 | ¥1,100 — **slow motion**: the last six days to the top take two beats, effects run at 1/4 speed, the camera pushes in and orbits, music low-passes, a heartbeat on every beat |
+| 7.45 | −2 | 历史最高 ¥1,250/克 · $5,595/盎司 (2026-01-29): rays, ring, card |
+| **8.51** | **drop** | bubble bursts back to real time: glass + impact, camera blown back, 「黄金暴跌」, the line falls for four beats |
+| 10.64 | +4 | landing punch-in: −39.5% · 不到 10 个月，从 ¥1,250 跌到 ¥756 |
+| 12.77 / 13.83 | +8 / +10 | 「现在，还能买吗？」 / 抄底，还是接飞刀？ |
+| 14.89 | +12 | 让我们把时间倒回: the camera flies back along the line |
+| 17.02 | +16 | 「2023 · 这一轮大涨，要从这一年说起」 |
 
 ## Build
 

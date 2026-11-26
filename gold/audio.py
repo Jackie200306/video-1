@@ -73,10 +73,12 @@ def rewind_sfx(dur):
 # ----------------------------------------------------------------- SFX timeline
 add(bubble_stretch(D - 0.1), 0.0, -24, send=0.1)
 add(riser(D - 0.05, True), 0.0, -23, send=0.2)
-for k in (-6, -5, -4, -3):
+for k in (-6, -5):
     add(tick(1900, 0.04), D + k * P, -30, pan=0.3 * (-1) ** k)
+for k in (-4, -3, -2, -1):                                    # slow motion: a heartbeat on each beat
+    add(heartbeat(0.9), D + k * P - 0.01, -15 + (k + 4) * 1.5)
 # a chime on every round number the climb breaks through (each lands on a beat)
-NOTES = [1046.5, 1174.7, 1318.5, 1568.0, 1760.0]
+NOTES = [1046.5, 1174.7, 1318.5, 1396.9, 1568.0, 1760.0, 2093.0]
 for k, m in enumerate([m for m in HK['climb'] if m['level'] and m['level'] < 1200]):
     add(bell(NOTES[k], 1.4, 0.6), m['t'], -22, pan=0.25, send=0.3)
     add(pop(), m['t'], -22, pan=0.3)
@@ -139,11 +141,10 @@ if song_path:
             out[k:k + blk_], zi = signal.sosfilt(sos, seg[k:k + blk_], axis=0, zi=zi)
         return out
     ie = int(3 * P * SR)
-    bgm[:ie] = sweep_lp(bgm[:ie], 450, 19000, 1.6)
-    bgm[:ie] *= db(-10 * (1 - np.arange(ie) / ie) ** 1.5)[:, None]          # and swells in
+    bgm *= np.clip(t / 0.6, 0, 1)[:, None] ** 1.5                           # short, full-band fade-in
     # pre-drop: sweep a low-pass down over the last two beats and pull the level back, then leave
     # a near-silent gap so the crack is heard alone; the drop comes back full band on the burst
-    a0, a1 = HK['peakTag'], D
+    a0, a1 = HK['slowmo'], D
     i0, i1 = int(a0 * SR), int(a1 * SR)
     blk_ = 256
     zi = np.zeros((1, 2, 2))
