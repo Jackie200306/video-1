@@ -209,16 +209,22 @@ if TL.get('full'):
     for k in range(6):
         add(tick(1900 - 80 * k, 0.04), HS['table'] + 0.15 + k * P / 2, -22, pan=(k - 2.5) * 0.15)
     add(pop(), HS['table'] + 0.15 + 3.5 * P, -17)
-    # leverage, one idea at a time
+    # leverage, slide by slide: a soft pop under every line that appears
     add(whoosh(0.5, 300, 3000), LV['t0'] - 0.2, -20, send=0.2); add(thump(64, 0.5), LV['t0'], -13)
     add(pop(), LV['kw'], -16); add(bell(1318.5, 2.0, 0.7), LV['kw'] + 0.01, -19, send=0.4)
-    add(whoosh(0.4, 400, 3000), LV['pic'] - 0.2, -22, pan=-0.3)
-    add(thump(90, 0.4), LV['pic'], -15); add(thump(70, 0.5), LV['pic2'], -14); add(pop(), LV['pic3'], -16)
-    add(pop(), LV['cap'], -17, pan=0.3)
-    add(fall_whistle(LV['fallEnd'] - LV['fall']), LV['fall'], -20, pan=0.2); add(thump(55, 0.6), LV['fallEnd'], -13)
+    add(whoosh(0.4, 400, 3000), LV['s1'] - 0.2, -22, pan=-0.3)
+    for key in ('s1', 's2', 's2b', 's3', 's4'):
+        add(pop(), LV[key], -17, pan=0.25)
+    add(thump(90, 0.4), LV['s1'], -16); add(thump(70, 0.5), LV['s2'], -15)
+    add(riser(0.6, False), LV['s3b'] - 0.05, -24); add(bell(1568, 1.8, 0.7), LV['s3b'] + 0.05, -17, send=0.4); add(shimmer(1.0, 40), LV['s3b'] + 0.05, -21)
+    add(thump(56, 0.6), LV['s4'], -12)
+    add(fall_whistle(0.6), LV['s4b'] - 0.05, -21); add(impact(0.6), LV['s4b'] + 0.1, -15, send=0.35)
     add(whoosh(0.3, 600, 4000), LV['you'] - 0.15, -23, pan=-0.3); add(pop(), LV['you'], -16, pan=-0.3)
-    add(whoosh(0.3, 600, 4000), LV['broker'] - 0.15, -23, pan=0.3); add(pop(), LV['broker'], -16, pan=0.3); add(thump(62, 0.45), LV['broker'] + 2 * P, -16)
-    add(impact(0.9), LV['force'], -10, send=0.4); add(thump(50, 0.7), LV['force'] + 0.01, -12); add(tick(800, 0.08), LV['force'] + P, -22)
+    add(whoosh(0.3, 600, 4000), LV['broker'] - 0.15, -23, pan=0.3)
+    for k in range(3):
+        add(pop(), LV['broker'] + 2 * k * P, -16 + (k == 2), pan=0.3)
+    add(thump(62, 0.45), LV['broker'] + 4 * P, -15)
+    add(impact(0.9), LV['force'], -10, send=0.4); add(thump(50, 0.7), LV['force'] + 0.01, -12); add(tick(800, 0.08), LV['force'] + 2 * P, -22)
     add(whoosh(0.4, 400, 3000), LV['cascade'] - 0.2, -22, pan=-0.3)
     for k in range(4):
         t0 = LV['cascade'] + k * 2 * P
@@ -227,12 +233,6 @@ if TL.get('full'):
     add(fall_whistle(6 * P), LV['cascade'] + P, -22, pan=0.1)
     add(whoosh(0.8, 300, 2500), LV['cascade'] + 8 * P - 0.1, -21, send=0.2)
     add(thump(60, 0.6), LV['final'], -11); add(impact(0.6), LV['final'], -15, send=0.4); add(pop(), LV['final'] + 2 * P, -18)
-    # inflation
-    add(whoosh(0.5, 300, 3000), INF['t0'] - 0.2, -20, send=0.2); add(thump(64, 0.5), INF['t0'], -14)
-    add(riser(INF['labels'] - INF['chart'], False), INF['chart'], -25, send=0.2)
-    add(bell(1568, 2.4, 0.8), INF['labels'], -15, send=0.4); add(shimmer(1.2, 50), INF['labels'], -19, send=0.3)
-    add(pop(), INF['labels'] + P, -17, pan=0.3)
-    add(thump(55, 0.6), INF['real'], -13); add(bell(523, 2.6, 0.5), INF['real'] + 0.02, -19, send=0.5)
     # outro
     add(whoosh(0.5, 300, 3000), OUT['t0'] - 0.2, -20, send=0.2); add(thump(64, 0.5), OUT['q'], -13); add(pop(), OUT['q'], -17)
     for k, key in enumerate(('p1', 'p2', 'p3')):
@@ -244,7 +244,7 @@ if TL.get('full'):
     add(thump(64, 0.5), OUT['final'] + 4 * P, -12); add(bell(880, 3.5, 0.8), OUT['final'] + 4 * P, -14, send=0.5)
     add(shimmer(1.6, 60), OUT['final'] + 4 * P, -18, pan=0.2, send=0.3)
     # section cuts: a soft whoosh into each
-    for tc in (LV['t0'], INF['t0'], OUT['t0']):
+    for tc in (LV['t0'], OUT['t0']):
         add(whoosh(0.6, 2500, 300), tc - 0.3, -22, send=0.2)
 
 # reverb
@@ -325,10 +325,10 @@ if song_path:
     env = np.abs(sfx).max(1)
     rel = math.exp(-1 / (0.3 * SR))
     e = signal.lfilter([1 - rel], [1, -rel], env)
-    duck = 1 - 0.35 * np.clip(e / (np.percentile(env, 99.5) + 1e-6), 0, 1)
+    duck = 1 - 0.20 * np.clip(e / (np.percentile(env, 99.5) + 1e-6), 0, 1)
     bgm *= duck[:, None]
     bgm *= np.clip(t / 0.12, 0, 1)[:, None]
-    out = sfx * 0.9 + bgm
+    out = sfx * 0.9 * db(-2) + bgm * db(2)                      # effects -2 dB, music +2 dB
 else:
     out = sfx
 out *= np.clip((T - t) / 0.5, 0, 1)[:, None]                  # preview tail

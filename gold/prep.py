@@ -135,7 +135,7 @@ EXTRA = {}
 if FULL:
     # music edit in song bars: [4,24) + [32,77) + [73,77) + [77,end). Splices sit on bar lines where the
     # song repeats itself (waveform correlation 0.93 at 24->32, 0.94 at 77->73).
-    EDIT = [(4, 24), (32, 77), (73, 77), (77, None)]
+    EDIT = [(4, 24), (32, None)]
     sbt = lambda b: SONG_BAR0 + b * BAR
     segs, vt = [], 0.0
     for a, b in EDIT:
@@ -236,10 +236,11 @@ if FULL:
     EXTRA['history'] = dict(t0=VB(36), t1=VB(56), keys=[dict(t=VB(b), x=X(dd)) for b, dd in HK2], crashes=CR,
                             intro=dict(t=VB(36), x=X('1971-08-15')), table=VB(52), breakdown=VB(39.25), drop=VB(40), bubble=VB(38.1))
     # ---- leverage explainer, inflation, outro (2D scenes), all on the bar grid
-    L0 = 56                                         # leverage explainer: 12 bars, one idea at a time
-    EXTRA['lev'] = dict(t0=VB(L0), title=VB(L0), kw=VB(L0, 2), pic=VB(L0 + 1), pic2=VB(L0 + 1.5), pic3=VB(L0 + 2), cap=VB(L0 + 2.5),
-                        fall=VB(L0 + 3), fallEnd=VB(L0 + 3.75), you=VB(L0 + 4.5), broker=VB(L0 + 6), force=VB(L0 + 7.5),
-                        cascade=VB(L0 + 8.5), final=VB(L0 + 11), t1=VB(L0 + 12))
+    L0 = 56                                         # leverage explainer: 14 bars, slide by slide, one line at a time
+    EXTRA['lev'] = dict(t0=VB(L0), title=VB(L0), kw=VB(L0, 2),
+                        s1=VB(L0 + 1), s2=VB(L0 + 2), s2b=VB(L0 + 2.5), s3=VB(L0 + 3.25), s3b=VB(L0 + 3.75),
+                        s4=VB(L0 + 4.75), s4b=VB(L0 + 5.25), you=VB(L0 + 6.25), broker=VB(L0 + 7.5),
+                        force=VB(L0 + 9.25), cascade=VB(L0 + 10.25), final=VB(L0 + 12.75), t1=VB(L0 + 14))
     cpi = {}
     for line in open(os.path.join(HERE, 'data', 'cpi_us_monthly.csv')):
         if line.startswith('Date'):
@@ -256,13 +257,13 @@ if FULL:
     gold_m = [35.0 if k < '1971-08' else gm.get(k) for k in months]
     last_g = NOW[1]
     gold_m = [g if g else last_g for g in gold_m]
-    EXTRA['infl'] = dict(t0=VB(68), title=VB(68), chart=VB(68.5), labels=VB(71), real=VB(71.5), t1=VB(74),
+    EXTRA['infl'] = dict(t0=1e9, title=1e9, chart=1e9, labels=1e9, real=1e9, t1=1e9,        # section dropped
                          months=months, cpi=[cpi[k] for k in months], gold=gold_m, gold_now=NOW[1],
                          cpi_1980=cpi['1980-01'], cpi_now=cpi[months[-1]])
-    EXTRA['outro'] = dict(t0=VB(74), q=VB(74), p1=VB(75), p2=VB(76), p3=VB(77), final=VB(78.5), cta=VB(78.5), fade=T - 2.4)
+    EXTRA['outro'] = dict(t0=VB(70), q=VB(70), p1=VB(71), p2=VB(72), p3=VB(73), final=VB(74.5), cta=VB(74.5), fade=T - 2.4)
     EXTRA['music'] = segs
     print('full: T=%.2f s; timeline %.2f-%.2f, now->hist cut %.2f, lev %.2f, infl %.2f, outro %.2f, final %.2f' %
-          (T, VB(12), VB(29), VB(36), VB(56), VB(68), VB(74), VB(78.5)))
+          (T, VB(12), VB(29), VB(36), VB(56), VB(70), VB(70), VB(74.5)))
     print('music', segs)
     for c in CR:
         print('  crash %s  %s -> %s  %d%%  rec %s (%s y)' % (c['label'], c['peak'], c['low'], c['dd'], c['rec'], c.get('years')))

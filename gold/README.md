@@ -1,9 +1,9 @@
 # 黄金暴跌，现在还能买吗？· Gold crash video
 
-1920×1080 / 60 fps, 2:48. The music is 《We Never》 from 8.89 s into the song to its end, edited on
-bar lines: one 8-bar chorus phrase is cut (song bars 24–32) and 4 bars of the variation are played
-twice (song bars 73–77), at points where the song repeats itself (waveform correlation 0.93 / 0.94,
-25 ms crossfades). Every cut, card and hit sits on the beat grid (112.8 BPM).
+1920×1080 / 60 fps, 2:39. The music is 《We Never》 from 8.89 s into the song to its end, with one
+8-bar chorus phrase cut (song bars 24–32, spliced where the song repeats itself, waveform correlation
+0.93, 25 ms crossfade). Every cut, card and hit sits on the beat grid (112.8 BPM). In the mix the
+effects sit 2 dB lower and the music 2 dB higher than before, with lighter ducking (20%).
 
 - `output/gold_full.mp4`: the full video.
 - `output/gold_hook_fx.mp4`: the approved opening on its own.
@@ -15,10 +15,9 @@ twice (song bars 73–77), at points where the song repeats itself (waveform cor
 | 0:53–1:08 | today: ¥756/克 ≈ $3,525/盎司 (×31.1035 ÷ 6.67); 「现在，可以入场了吗？」; 「先别急。」; 「让我们看看：每次暴跌之后，多久才回本？」; rewind to 1971 |
 | 1:08–1:42 | log-scale $ chart since 1971: the crashes of 1974, 1980 (its bubble bursts on the second drop), 2008, 2011, 2020 and 2026, each with its drawdown and a big 「回本用了 N 年」 card |
 | 1:42–1:51 | summary table of all six, held for four bars |
-| 1:51–2:16 | leverage, one idea at a time: only 1/10 is your money; ¥1,000 → ¥900 wipes it out; 「再给我一点时间」; the lender won't carry the risk; forced sale; 越卖越跌，越跌越卖 → 踩踏式下跌 |
-| 2:16–2:29 | gold vs US CPI since 1971 (×100 vs ×8.5); the 1980 top in today's money ($3,681) took 45 years |
-| 2:29–2:38 | 所以，现在能买吗？ three takeaways |
-| 2:38–2:48 | 「不要问能不能买，要问问自己：下跌的时候，能不能拿得住？」 on its own screen |
+| 1:51–2:20 | leverage as slides, one line at a time: 本金 1 万 + 借 9 万 = 10 万仓位; +10% doubles it; −10% (¥1,000 → ¥900) wipes it out; 「再给我一点时间」; the lender won't carry the risk; 强制平仓; 越卖越跌，越跌越卖 → 踩踏式下跌 |
+| 2:20–2:30 | 所以，现在能买吗？ three takeaways |
+| 2:30–2:39 | 「不要问能不能买，要问问自己：下跌的时候，能不能拿得住？」 on its own screen |
 
 ## Hook storyboard (beat-synced to 《We Never》, 112.8 BPM)
 
