@@ -162,7 +162,11 @@ if TL.get('full'):
     for k, dl in enumerate((0, 0.5, 1.0)):
         add(thump(70 + 12 * k, 0.4), NS['question'] + dl * P, -13 + 2 * (k == 2))
         add(pop(), NS['question'] + dl * P, -18, pan=(k - 1) * 0.4)
-    add(pop(), NS['sub'], -17); add(pop(), NS['sub'] + P, -18, pan=0.3)
+    add(thump(58, 0.6), NS['sub'], -11); add(impact(0.5), NS['sub'], -17, send=0.3)      # 先别急。
+    add(whoosh(0.35, 400, 3200), NS['sub2'] - 0.25, -21, pan=0.2)                     # 让我们看看…
+    for k, dl in enumerate((0, 0.5, 1.0)):
+        add(pop(), NS['sub2'] + dl * P, -17 + (k == 2) * 2, pan=(k - 1) * 0.4)
+    add(thump(72, 0.4), NS['sub2'] + P, -14); add(bell(1318.5, 2.0, 0.7), NS['sub2'] + P + 0.01, -19, send=0.4)
     # back to 1971: whoosh, clock running backwards, the cut
     rw = NS['cut'] - NS['rewind']
     add(whoosh(0.8, 3000, 250), NS['rewind'], -17, send=0.2)
@@ -186,8 +190,13 @@ if TL.get('full'):
             add(impact(0.6), cr['t_mid'], -15, send=0.3)
         if cr.get('t_rec'):
             tr = cr['t_rec']
-            add(bell(1318.5, 2.2, 0.8), tr + 0.25, -15, send=0.45); add(bell(1760, 2.0, 0.6), tr + 0.27, -19, send=0.45)
-            add(shimmer(1.2, 50), tr + 0.25, -19, pan=0.2, send=0.3)
+            # the big 「回本用了 N 年」 card
+            add(whoosh(0.3, 600, 4000), tr - 0.1, -24, pan=-0.3)
+            add(impact(0.5), tr + 0.12, -15, send=0.4); add(thump(76, 0.4), tr + 0.12, -14)
+            add(bell(1318.5, 2.2, 0.8), tr + 0.13, -14, send=0.45); add(bell(1760, 2.0, 0.6), tr + 0.15, -18, send=0.45)
+            add(shimmer(1.2, 50), tr + 0.12, -18, pan=0.2, send=0.3)
+        else:
+            add(thump(60, 0.6), tl_ + 0.45, -13); add(bell(523, 2.4, 0.6), tl_ + 0.46, -18, send=0.45)
     # the 1980 bubble: inflates over the breakdown, bursts on the second drop
     tb0, DR = HS['bubble'], HS['drop']
     add(bubble_stretch(DR - tb0 - 0.1), tb0, -25, send=0.1)
@@ -230,7 +239,9 @@ if TL.get('full'):
     for k, key in enumerate(('p1', 'p2', 'p3')):
         add(whoosh(0.3, 600, 4000), OUT[key] - 0.2, -25, pan=-0.4); add(pop(), OUT[key], -17, pan=-0.2)
         add(bell([1046.5, 1318.5, 1568.0][k], 1.8, 0.6), OUT[key] + 0.02, -21, send=0.35)
-    add(bell(880, 3.5, 0.8), OUT['cta'], -15, send=0.5); add(shimmer(1.6, 60), OUT['cta'], -19, pan=0.2, send=0.3)
+    add(pop(), OUT['cta'], -17)
+    add(thump(64, 0.5), OUT['cta'] + P, -13); add(bell(880, 3.5, 0.8), OUT['cta'] + P, -14, send=0.5)
+    add(shimmer(1.6, 60), OUT['cta'] + P, -18, pan=0.2, send=0.3)
     # section cuts: a soft whoosh into each
     for tc in (LV['t0'], INF['t0'], OUT['t0']):
         add(whoosh(0.6, 2500, 300), tc - 0.3, -22, send=0.2)

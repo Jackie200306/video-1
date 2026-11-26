@@ -10,11 +10,12 @@ end, and every cut, card and hit sits on the song's beat grid (112.8 BPM, 8-bar 
 |---|---|---|
 | 0:00–0:18 | intro → first drop | the hook (storyboard below) |
 | 0:17–1:10 | first chorus (32 bars) | 2023 → 2026 on the daily ¥/克 chart: 22 dated events (Fed hikes and cuts, SVB, the Israel–Hamas war, central-bank buying, tariffs, $3,000 / $4,000 / $5,000, the high, the Warsh nomination, the Iran war, the 2026 hike, margin-call selling), chapter titles, slams |
-| 1:10–1:25 | second intro | today: ¥756/克 ≈ $3,525/盎司 (×31.1035 ÷ 6.67), 「现在，可以入场了吗？」, rewind to 1971 |
-| 1:25–2:08 | second drop | log-scale $ chart since 1971: the crashes of 1974, 1980 (its bubble bursts on the drop), 2008, 2011, 2020 and 2026, each with its drawdown and the time it took to regain the old high; summary table |
+| 1:10–1:25 | second intro | today: ¥756/克 ≈ $3,525/盎司 (×31.1035 ÷ 6.67), 「现在，可以入场了吗？」, 「先别急。」, 「让我们看看：每次暴跌之后，多久才回本？」, rewind to 1971 |
+| 1:25–1:59 | second drop | log-scale $ chart since 1971: the crashes of 1974, 1980 (its bubble bursts on the drop), 2008, 2011, 2020 and 2026, each with its drawdown and a big 「回本用了 N 年」 card |
+| 1:59–2:08 | | summary table of all six, held for four bars |
 | 2:08–2:25 | variation | why crashes cascade: 10× leverage, a 10% fall wipes out the margin, forced selling, layers of liquidations, the loop |
 | 2:25–2:37 | | gold vs US CPI since 1971 (×100 vs ×8.5), and the 1980 top in today's money ($3,681) took 45 years |
-| 2:37–2:56 | outro | 所以，现在能买吗？ three takeaways, 你会在 ¥756 上车吗？ |
+| 2:37–2:56 | outro | 所以，现在能买吗？ three takeaways, then 「不要问能不能买，先问问自己：能不能拿得住」 |
 
 ## Hook storyboard (beat-synced to 《We Never》, 112.8 BPM)
 
@@ -46,6 +47,7 @@ BGM=/path/to/we_never.m4a THEME=fx ./build.sh       # -> output/gold_hook_fx.mp4
 `head.js` (helpers, palette, type), `data.js` (datasets, beat-locked head paths, the spring camera
 tracks), `chart.js` (the 3D chart: line, glow, particles, bubbles), `ui_timeline.js`, `ui_history.js`,
 `scenes2d.js` (leverage, inflation, outro) and `main.js` (frame loop, boot).
+`render_range.sh START END` re-renders only a frame range when a change doesn't touch earlier frames.
 
 `THEME=lux` is the current look (ivory studio light, metallic gold, deep emerald for falls,
 serif type). `cream`, `sun` and `blue` are the earlier drafts in `render/scene.js`.

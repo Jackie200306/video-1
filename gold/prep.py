@@ -170,8 +170,8 @@ if FULL:
                 dict(t=VB(30.5), text='{泡沫破裂}'), dict(t=VB(37), text='{现在}')]
     EXTRA['timeline'] = dict(t0=VB(12), t1=VB(37), events=events, keys=keys, chapters=chapters)
     # ---- now: price in both units, then the question
-    EXTRA['nowsec'] = dict(card=VB(37), overview=VB(38), convert=VB(38.5), question=VB(40), sub=VB(41.5),
-                        rewind=VB(43), cut=VB(44), fx=round(NOW[2] * OZ / NOW[1], 4), oz=OZ)
+    EXTRA['nowsec'] = dict(card=VB(37), overview=VB(38), convert=VB(38.5), question=VB(40), sub=VB(41.5), sub2=VB(42.5),
+                        rewind=VB(43.5), cut=VB(44), fx=round(NOW[2] * OZ / NOW[1], 4), oz=OZ)
     # ---- history (USD/oz, monthly averages since 1970 plus well-known extremes and the daily feed)
     D0 = d(SER[0][0])
     mon = []
@@ -210,10 +210,10 @@ if FULL:
     ]
     # head path (bar -> date) through the crashes; the 1980 bubble bursts on the second drop (bar 48)
     HK2 = [(44, '1971-08-15'), (44.75, '1974-12-30'), (45.25, '1976-08-25'), (45.75, '1978-07-28'),
-           (47.25, '1980-01-21'), (48, '1980-01-22'), (49, '1982-06-21'), (50.25, '1999-07-20'), (51.5, '2008-01-02'),
-           (53, '2008-03-17'), (53.5, '2008-10-24'), (54.25, '2009-10-06'), (55.5, '2011-09-06'), (56.25, '2013-04-15'),
-           (57, '2015-12-17'), (58.25, '2020-07-27'), (59.5, '2020-08-07'), (60.25, '2022-09-28'), (61, '2023-12-04'),
-           (62.25, PEAK[0]), (62.75, NOW[0])]
+           (47.25, '1980-01-21'), (48, '1980-01-22'), (48.75, '1982-06-21'), (49.5, '1999-07-20'), (50.5, '2008-01-02'),
+           (51.75, '2008-03-17'), (52.25, '2008-10-24'), (52.75, '2009-10-06'), (53.75, '2011-09-06'), (54.25, '2013-04-15'),
+           (54.75, '2015-12-17'), (55.5, '2020-07-27'), (56.75, '2020-08-07'), (57.25, '2022-09-28'), (57.75, '2023-12-04'),
+           (58.75, PEAK[0]), (59.25, NOW[0])]
     tmap = {dd: VB(b) for b, dd in HK2}
     for c in CR:
         c['peak_x'], c['low_x'] = X(c['peak'][0]), X(c['low'][0])
@@ -225,11 +225,11 @@ if FULL:
             c['rec_x'], c['t_rec'] = X(c['rec']), tmap[c['rec']]
             c['years'] = round((d(c['rec']) - d(c['peak'][0])).days / 365.25, 1)
             c['ylabel'] = {1: '3.5 年', 2: '28 年', 3: '1.5 年', 4: '9 年', 5: '3.3 年'}[c['n']]
-    EXTRA['history'] = dict(t0=VB(44), t1=VB(64.5), keys=[dict(t=VB(b), x=X(dd)) for b, dd in HK2], crashes=CR,
-                            intro=dict(t=VB(44), x=X('1971-08-15')), table=VB(63.25), breakdown=VB(47.25), drop=VB(48), bubble=VB(46.1))
+    EXTRA['history'] = dict(t0=VB(44), t1=VB(64), keys=[dict(t=VB(b), x=X(dd)) for b, dd in HK2], crashes=CR,
+                            intro=dict(t=VB(44), x=X('1971-08-15')), table=VB(60), breakdown=VB(47.25), drop=VB(48), bubble=VB(46.1))
     # ---- leverage explainer, inflation, outro (2D scenes), all on the bar grid
-    EXTRA['lev'] = dict(t0=VB(64.5), title=VB(64.5), example=VB(65.5), fall=VB(66.5), boom=VB(67.25), cascade=VB(68),
-                        loop=VB(70.25), t1=VB(72))
+    EXTRA['lev'] = dict(t0=VB(64), title=VB(64), example=VB(65), fall=VB(66), boom=VB(66.75), cascade=VB(67.5),
+                        loop=VB(70), t1=VB(72))
     cpi = {}
     for line in open(os.path.join(HERE, 'data', 'cpi_us_monthly.csv')):
         if line.startswith('Date'):
@@ -249,7 +249,7 @@ if FULL:
     EXTRA['infl'] = dict(t0=VB(72), title=VB(72), chart=VB(72.5), labels=VB(75), real=VB(75.5), t1=VB(78),
                          months=months, cpi=[cpi[k] for k in months], gold=gold_m, gold_now=NOW[1],
                          cpi_1980=cpi['1980-01'], cpi_now=cpi[months[-1]])
-    EXTRA['outro'] = dict(t0=VB(78), q=VB(78), p1=VB(79), p2=VB(80), p3=VB(81), cta=VB(83), fade=T - 3.0)
+    EXTRA['outro'] = dict(t0=VB(78), q=VB(78), p1=VB(79), p2=VB(80), p3=VB(81), cta=VB(82.5), fade=T - 2.6)
     print('full: T=%.2f s; timeline %.2f-%.2f, now->hist cut %.2f, lev %.2f, infl %.2f, outro %.2f' %
           (T, VB(12), VB(37), VB(44), VB(64), VB(72), VB(78)))
     for c in CR:

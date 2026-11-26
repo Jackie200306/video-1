@@ -274,9 +274,9 @@ function shakesDaily() {
 }
 // ---- the history chart (log $, 1970 -> 2026)
 function parHist(t) {
-  const lbK = [[VB(44), 2600], [VB(45.8), 2600], [VB(46.6), 2300], [VB(48), 2100], [VB(48.6), 3200], [VB(49.4), 7000], [VB(51.5), 7000], [VB(52.6), 2600],
-    [VB(54.5), 2600], [VB(55.3), 3800], [VB(58.3), 4400], [VB(59), 3000], [VB(61), 3300], [VB(62), 4200], [VB(63.1), 21000]];
-  const hxK = [[VB(44), 0.12], [VB(62.2), 0.14], [VB(63.1), 0.34]];
+  const lbK = [[VB(44), 2600], [VB(45.8), 2600], [VB(46.6), 2300], [VB(48), 2100], [VB(48.5), 3200], [VB(49.1), 7000], [VB(50.6), 7000], [VB(51.3), 2600],
+    [VB(52.9), 2600], [VB(53.5), 3800], [VB(55.6), 4400], [VB(56.4), 3000], [VB(57.9), 3300], [VB(58.5), 4200], [VB(59.8), 21000]];
+  const hxK = [[VB(44), 0.12], [VB(58.6), 0.14], [VB(59.8), 0.34]];
   let z = -0.35 * (1 - smooth(VB(44), VB(44.7), t));
   for (const c of HS.crashes) {
     z += 0.22 * smooth(c.t_peak - BAR * 0.5, c.t_peak, t) * (1 - smooth(c.t_peak + 0.3, c.t_peak + 0.9, t));
@@ -287,7 +287,7 @@ function parHist(t) {
   z -= 0.40 * bump(t, HS.drop + 0.06, 0.06, 0.35, 1.1);
   const yaw = (20 + 5 * Math.sin(t * 2 * Math.PI / 23)) * Math.PI / 180 + 0.14 * smooth(HS.breakdown, HS.drop, t) * (1 - smooth(HS.drop, HS.drop + 0.7, t));
   return { lb: keyed(t, lbK), hx: keyed(t, hxK), zoom: z, yaw, pitch: (-3 + 1.5 * Math.sin(t * 2 * Math.PI / 31)) * Math.PI / 180,
-    hyMin: -0.5, hyMax: keyed(t, [[VB(44), 0.10], [VB(62.2), 0.10], [VB(63.1), 0.36]]), wF: 3.2, wS: 2.2, span: 0.32 };
+    hyMin: -0.5, hyMax: keyed(t, [[VB(44), 0.10], [VB(58.6), 0.10], [VB(59.8), 0.36]]), wF: 3.2, wS: 2.2, span: 0.32 };
 }
 function shakesHist() {
   const L = [[HS.drop, 30, 0.022, 4.0]];
@@ -1234,29 +1234,45 @@ function drawQuestion2(t) {
   const dimA = smooth(Q - 0.15, Q + 0.2, t) * (1 - out);
   veil(t, dimA);
   ctx.save();
-  const parts = [['现在，', 0], ['可以', 0.5], ['入场了吗', 1.0], ['？', 1.0]];
-  const push = 1 + 0.04 * smooth(Q, NS.rewind, t);
-  ctx.translate(W / 2, 520); ctx.scale(push, push); ctx.translate(-W / 2, -520);
-  const size = 160, font = F.cn(size), cy = 520 - 40 * out;
-  const tot = parts.reduce((a, p) => a + width(p[0], font), 0); let x = W / 2 - tot / 2;
-  for (const [s, dl] of parts) {
-    const w = width(s, font), u = (t - (Q + dl * P)) / 0.3;
-    if (u > 0) {
-      ctx.save(); ctx.globalAlpha = (1 - out) * clamp(u * 2, 0, 1);
-      const sc = lerp(1.5, 1, easeOutBack(u, 1.8)); ctx.translate(x + w / 2, cy); ctx.scale(sc, sc);
-      if (s === '？') { ctx.rotate(0.1 * Math.sin(t * 9) * beatPulse(t)); goldText(s, -w / 2, 0, font, size); }
-      else shadowText(s, -w / 2, 0, font, rgba(INK, 1), 'left', 0, 0.14);
-      ctx.restore();
+  // card 1: 现在，可以入场了吗？
+  const q1 = 1 - smooth(NS.sub - 0.12, NS.sub + 0.05, t);
+  if (q1 > 0.01) {
+    const parts = [['现在，', 0], ['可以', 0.5], ['入场了吗', 1.0], ['？', 1.0]];
+    const push = 1 + 0.04 * smooth(Q, NS.sub, t);
+    ctx.save(); ctx.translate(W / 2, 560); ctx.scale(push, push); ctx.translate(-W / 2, -560);
+    const size = 170, font = F.cn(size), cy = 600;
+    const tot = parts.reduce((a, p) => a + width(p[0], font), 0); let x = W / 2 - tot / 2;
+    for (const [s, dl] of parts) {
+      const w = width(s, font), u = (t - (Q + dl * P)) / 0.3;
+      if (u > 0) {
+        ctx.save(); ctx.globalAlpha = q1 * clamp(u * 2, 0, 1);
+        const sc = lerp(1.5, 1, easeOutBack(u, 1.8)); ctx.translate(x + w / 2, cy); ctx.scale(sc, sc);
+        if (s === '？') { ctx.rotate(0.1 * Math.sin(t * 9) * beatPulse(t)); goldText(s, -w / 2, 0, font, size); }
+        else shadowText(s, -w / 2, 0, font, rgba(INK, 1), 'left', 0, 0.14);
+        ctx.restore();
+      }
+      x += w;
     }
-    x += w;
+    ctx.restore();
   }
-  const su = expoOut((t - NS.sub) / 0.6);
-  if (su > 0) {
-    ctx.save(); ctx.globalAlpha = (1 - out) * su;
-    const y1 = cy + 140 + 14 * (1 - su);
-    text('先别急。', W / 2, y1, F.cnB(52), rgba(OX, 1), 'center', 4);
-    text('看看历史：黄金每次暴跌之后，多久才回本？', W / 2, y1 + 78, F.cnB(46), rgba(SOFT, 1), 'center', 2);
-    goldRule(W / 2 - 520, W / 2 + 520, y1 + 112, su);
+  // card 2: 先别急。
+  const q2 = smooth(NS.sub - 0.02, NS.sub + 0.1, t) * (1 - smooth(NS.sub2 - 0.12, NS.sub2 + 0.05, t));
+  if (q2 > 0.01) {
+    ctx.save(); ctx.globalAlpha = q2 * (1 - out);
+    popText(() => { const f = F.cn(230), w1 = width('先别急', f), w2 = width('。', f), x = W / 2 - (w1 + w2) / 2;
+      shadowText('先别急', x, 640, f, rgba(INK, 1), 'left', 0, 0.16); goldText('。', x + w1, 640, f, 230); }, t, NS.sub, W / 2, 560, 1.8);
+    ctx.restore();
+  }
+  // card 3: 让我们看看：每次暴跌之后，多久才回本？
+  const q3 = smooth(NS.sub2 - 0.02, NS.sub2 + 0.1, t) * (1 - out);
+  if (q3 > 0.01) {
+    ctx.save(); ctx.globalAlpha = q3;
+    popText(() => text('让我们看看', W / 2, 330, F.cnB(64), rgba(SOFT, 1), 'center', 10), t, NS.sub2, W / 2, 310);
+    popText(() => shadowText('每次暴跌之后，', W / 2, 520, F.cn(124), rgba(INK, 1), 'center', 6, 0.14), t, NS.sub2 + P * 0.5, W / 2, 480);
+    popText(() => { const f = F.cn(150), s1 = '多久', s2 = '才', s3 = '回本', s4 = '？', ws = [s1, s2, s3, s4].map(x => width(x, f, 6)); let x = W / 2 - ws.reduce((a, b) => a + b, 0) / 2;
+      x += goldText(s1, x, 720, f, 150, 'left', 6); x += shadowText(s2, x, 720, f, rgba(INK, 1), 'left', 6, 0.14); x += goldText(s3, x, 720, f, 150, 'left', 6); goldText(s4, x, 720, f, 150, 'left', 6);
+    }, t, NS.sub2 + P, W / 2, 670, 1.6);
+    goldRule(W / 2 - 560, W / 2 + 560, 790, smooth(NS.sub2 + P, NS.sub2 + 2 * P, t));
     ctx.restore();
   }
   ctx.restore();
@@ -1345,16 +1361,6 @@ function drawHistMarks(c, t) {
         ctx.strokeStyle = goldFill(P.y - 10, P.y + 10); ctx.lineWidth = 5; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(xr, yr); ctx.stroke();
         for (const q of [P, { x: xr, y: yr }]) { ctx.fillStyle = rgba(GOLD, 1); ctx.fillRect(q.x - 1.5, q.y - 14, 3, 28); }
-        const u = (t - cr.t_rec - 0.25) / 0.3;
-        if (u > 0) {
-          const mx = (P.x + R.x) / 2, my = Math.min(P.y, R.y) - 30, sc = lerp(1.6, 1, easeOutBack(u, 1.8));
-          ctx.translate(mx, my); ctx.scale(sc, sc); ctx.globalAlpha = fade * clamp(u * 2, 0, 1);
-          const f1 = F.cnB(32), f2 = F.num(64), s1 = '回本用了 ', w1 = width(s1, f1), w2 = width(cr.ylabel, f2);
-          halo(s1, -(w1 + w2) / 2, 0, f1, 'left', 12); halo(cr.ylabel, -(w1 + w2) / 2 + w1, 4, f2, 'left', 16);
-          text(s1, -(w1 + w2) / 2, 0, f1, rgba(INK, 1)); goldText(cr.ylabel, -(w1 + w2) / 2 + w1, 4, f2, 64);
-          halo(ymDate(cr.rec) + ' 重回 $' + fmt(cr.peak[1]), 0, 40, F.cnB(24), 'center', 10);
-          text(ymDate(cr.rec) + ' 重回 $' + fmt(cr.peak[1]), 0, 40, F.cnB(24), rgba(SOFT, 1), 'center');
-        }
         ctx.restore();
       }
     }
@@ -1369,7 +1375,7 @@ function drawHistMarks(c, t) {
     // 2026: the open question
     if (!cr.t_rec && t > cr.t_low + 0.6 && t < HS.table + 0.3) {
       const B = hp2(c, cr.low_x, cr.low[1]); const a = smooth(cr.t_low + 0.6, cr.t_low + 0.9, t) * (1 - smooth(HS.table - 0.1, HS.table + 0.2, t));
-      if (B && a > 0.01) { ctx.save(); ctx.globalAlpha = a; halo('回本要多久？', B.x + 44, B.y + 18, F.cn(48), 'left', 16); goldText('回本要多久？', B.x + 44, B.y + 18, F.cn(48), 48, 'left'); ctx.restore(); }
+      void B; void a;
     }
   });
 }
@@ -1430,6 +1436,46 @@ function histChipVis(t) {
     if (cr.t_mid) v *= 1 - bump(t, cr.t_mid, 0.15, 1.0, 0.3);
   }
   return v;
+}
+
+// 「回本用了 28 年」: a big card in the middle of the screen, held for about a bar
+function recCard(t, t0, tEnd, top, mid, unit, bottom, k) {
+  if (t < t0 || t > tEnd + 0.3) return;
+  const u = (t - t0) / 0.32, a = clamp(u * 2.5, 0, 1) * (1 - smooth(tEnd - 0.05, tEnd + 0.25, t));
+  if (a < 0.01) return;
+  const cx = 640, cy = 560, w = 640, h = 420, sc = lerp(1.5, 1, easeOutBack(u, 1.7));
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(cx, cy); ctx.scale(sc, sc);
+  // gold ring burst behind the card
+  const ur = (t - t0) / 0.9;
+  if (ur > 0 && ur < 1) { ctx.strokeStyle = rgba(GOLD, 0.8 * (1 - ur)); ctx.lineWidth = 6 * (1 - ur) + 1; ctx.beginPath(); ctx.ellipse(0, 0, w * 0.5 + 260 * easeOutCubic(ur), h * 0.5 + 200 * easeOutCubic(ur), 0, 0, 7); ctx.stroke(); }
+  ctx.shadowColor = 'rgba(110,80,30,0.25)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
+  rrect(-w / 2, -h / 2, w, h, 22); ctx.fillStyle = 'rgba(255,253,248,0.96)'; ctx.fill(); ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = 'rgba(190,150,70,0.55)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = goldFill(-h / 2, h / 2); rrect(-w / 2, -h / 2, 10, h, 5); ctx.fill();
+  text(top, 0, -h / 2 + 62, F.cnB(30), rgba(SOFT, 1), 'center', 2);
+  goldRule(-w / 2 + 60, w / 2 - 60, -h / 2 + 84);
+  text(k === 'q' ? '这一次' : '回本用了', 0, -h / 2 + 150, F.cn(54), rgba(INK, 1), 'center', 6);
+  const fN = F.num(190), fU = F.cn(84), wN = width(mid, fN), wU = width(unit, fU), x0 = -(wN + wU + 8) / 2, yN = h / 2 - 92;
+  const pul = 1 + 0.04 * beatPulse(t);
+  ctx.save(); ctx.translate(0, yN - 60); ctx.scale(pul, pul); ctx.translate(0, -(yN - 60));
+  goldText(mid, x0, yN, fN, 190); goldText(unit, x0 + wN + 8, yN, fU, 84);
+  ctx.restore();
+  text(bottom, 0, h / 2 - 34, F.cnB(26), rgba(SOFT, 1), 'center', 2);
+  ctx.restore();
+}
+function drawRecCards(t) {
+  const C = HS.crashes;
+  C.forEach((cr, k) => {
+    const nx = C[k + 1], end = nx ? Math.min(cr.t_rec ? cr.t_rec + BAR * 1.0 : 1e9, nx.t_peak - BAR * 0.3) : HS.table - 0.05;
+    if (cr.t_rec) {
+      const [num, unit] = cr.ylabel.split(' ');
+      recCard(t, cr.t_rec + 0.12, end, '第 ' + cr.n + ' 次 · ' + cr.label + ' 年 $' + fmt(cr.peak[1]) + ' 见顶', num, unit,
+        ymDate(cr.peak[0]) + ' → ' + ymDate(cr.rec) + '，才重回 $' + fmt(cr.peak[1]), 'y');
+    } else {
+      recCard(t, cr.t_low + 0.45, HS.table - 0.05, '第 6 次 · 2026 年 $' + fmt(cr.peak[1]) + ' 见顶', '？', '',
+        '已经跌了 37%，回本要多久？', 'q');
+    }
+  });
 }
 // ================================================================ 2D scenes: leverage & liquidation cascade, inflation, outro
 function bg2D(t) {
@@ -1698,15 +1744,15 @@ function drawOutro(t) {
   const a = smooth(O.t0, O.t0 + 0.35, t);
   ctx.save(); ctx.globalAlpha = a;
   popText(() => { const f = F.cn(110), w1 = width('所以，现在', f), w2 = width('能买吗', f), w3 = width('？', f), x = W / 2 - (w1 + w2 + w3) / 2;
-    shadowText('所以，现在', x, 250, f, rgba(INK, 1), 'left', 0, 0.12); goldText('能买吗', x + w1, 250, f, 110); goldText('？', x + w1 + w2, 250, f, 110); }, t, O.q, W / 2, 220);
+    shadowText('所以，现在', x, 230, f, rgba(INK, 1), 'left', 0, 0.12); goldText('能买吗', x + w1, 230, f, 110); goldText('？', x + w1 + w2, 230, f, 110); }, t, O.q, W / 2, 200);
   const items = [
     [O.p1, '1', '暴跌之后回本：', '快的 1.5 年，慢的 28 年'],
     [O.p2, '2', '别加杠杆：', '它是踩踏的放大器'],
-    [O.p3, '3', '真想买：', '用闲钱、分批买、拿得住'],
+    [O.p3, '3', '真想买：', '只用闲钱，分批慢慢买'],
   ];
   items.forEach(([t0, n, h, body], k) => {
     const u = (t - t0) / 0.35; if (u <= 0) return;
-    const y = 400 + k * 150, x = 400;
+    const y = 370 + k * 140, x = 400;
     ctx.save(); ctx.globalAlpha = a * clamp(u * 2, 0, 1); ctx.translate(60 * (1 - easeOutCubic(u)), 0);
     ctx.shadowColor = 'rgba(110,80,30,0.18)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
     rrect(x, y - 70, 1120, 116, 16); ctx.fillStyle = 'rgba(255,253,248,0.95)'; ctx.fill(); ctx.shadowColor = 'transparent';
@@ -1718,11 +1764,15 @@ function drawOutro(t) {
   });
   const uc = (t - O.cta) / 0.4;
   if (uc > 0) {
+    // the closing line: don't ask whether you can buy, ask whether you can hold
     ctx.save(); ctx.globalAlpha = a * clamp(uc * 2, 0, 1);
-    const f = F.cn(64), s1 = '你会在 ', s2 = '¥' + fmt(NOW.cny), s3 = ' 上车吗？';
-    const w1 = width(s1, f), w2 = width(s2, F.num(76)), w3 = width(s3, f), x = W / 2 - (w1 + w2 + w3) / 2, y = 930;
-    shadowText(s1, x, y, f, rgba(INK, 1), 'left', 0, 0.12); goldText(s2, x + w1, y + 4, F.num(76), 76); shadowText(s3, x + w1 + w2, y, f, rgba(INK, 1), 'left', 0, 0.12);
-    text('评论区聊聊 · 历史不代表未来，本视频不构成投资建议', W / 2, y + 62, F.cnB(28), rgba(SOFT, 1), 'center', 3);
+    const y = 862, f1 = F.cn(58), f2 = F.cn(70);
+    popText(() => shadowText('不要问能不能买，', W / 2, y, f1, rgba(SOFT, 1), 'center', 4, 0.1), t, O.cta, W / 2, y - 20, 1.3);
+    popText(() => { const s1 = '先问问自己：能不能', s2 = '拿得住', w1 = width(s1, f2, 2), w2 = width(s2, f2, 2), x = W / 2 - (w1 + w2) / 2;
+      shadowText(s1, x, y + 92, f2, rgba(INK, 1), 'left', 2, 0.14); goldText(s2, x + w1, y + 92, f2, 70, 'left', 2);
+      goldRule(x + w1 - 10, x + w1 + w2 + 10, y + 112, 1); }, t, O.cta + HK.beat, W / 2, y + 70, 1.5);
+    const uf = (t - (O.cta + 3 * HK.beat)) / 0.5;
+    if (uf > 0) { ctx.globalAlpha = a * clamp(uf, 0, 1); text('评论区聊聊 · 历史不代表未来，本视频不构成投资建议', W / 2, y + 150, F.cnB(26), rgba(FAINT, 1), 'center', 3); }
     ctx.restore();
   }
   ctx.restore();
@@ -1772,7 +1822,7 @@ function drawChartFrame(i, t) {
     drawRewind(t);
     draw2023(t);
     if (TL.full) { drawConvert(t); drawQuestion2(t); drawRewind2(t); }
-  } else { drawHistHeadline(t); drawTable(t); }
+  } else { drawHistHeadline(t); drawRecCards(t); drawTable(t); }
 }
 function renderFrame(i) {
   const t = i / FPS;

@@ -63,16 +63,6 @@ function drawHistMarks(c, t) {
         ctx.strokeStyle = goldFill(P.y - 10, P.y + 10); ctx.lineWidth = 5; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(xr, yr); ctx.stroke();
         for (const q of [P, { x: xr, y: yr }]) { ctx.fillStyle = rgba(GOLD, 1); ctx.fillRect(q.x - 1.5, q.y - 14, 3, 28); }
-        const u = (t - cr.t_rec - 0.25) / 0.3;
-        if (u > 0) {
-          const mx = (P.x + R.x) / 2, my = Math.min(P.y, R.y) - 30, sc = lerp(1.6, 1, easeOutBack(u, 1.8));
-          ctx.translate(mx, my); ctx.scale(sc, sc); ctx.globalAlpha = fade * clamp(u * 2, 0, 1);
-          const f1 = F.cnB(32), f2 = F.num(64), s1 = '回本用了 ', w1 = width(s1, f1), w2 = width(cr.ylabel, f2);
-          halo(s1, -(w1 + w2) / 2, 0, f1, 'left', 12); halo(cr.ylabel, -(w1 + w2) / 2 + w1, 4, f2, 'left', 16);
-          text(s1, -(w1 + w2) / 2, 0, f1, rgba(INK, 1)); goldText(cr.ylabel, -(w1 + w2) / 2 + w1, 4, f2, 64);
-          halo(ymDate(cr.rec) + ' 重回 $' + fmt(cr.peak[1]), 0, 40, F.cnB(24), 'center', 10);
-          text(ymDate(cr.rec) + ' 重回 $' + fmt(cr.peak[1]), 0, 40, F.cnB(24), rgba(SOFT, 1), 'center');
-        }
         ctx.restore();
       }
     }
@@ -87,7 +77,7 @@ function drawHistMarks(c, t) {
     // 2026: the open question
     if (!cr.t_rec && t > cr.t_low + 0.6 && t < HS.table + 0.3) {
       const B = hp2(c, cr.low_x, cr.low[1]); const a = smooth(cr.t_low + 0.6, cr.t_low + 0.9, t) * (1 - smooth(HS.table - 0.1, HS.table + 0.2, t));
-      if (B && a > 0.01) { ctx.save(); ctx.globalAlpha = a; halo('回本要多久？', B.x + 44, B.y + 18, F.cn(48), 'left', 16); goldText('回本要多久？', B.x + 44, B.y + 18, F.cn(48), 48, 'left'); ctx.restore(); }
+      void B; void a;
     }
   });
 }
@@ -148,4 +138,44 @@ function histChipVis(t) {
     if (cr.t_mid) v *= 1 - bump(t, cr.t_mid, 0.15, 1.0, 0.3);
   }
   return v;
+}
+
+// 「回本用了 28 年」: a big card in the middle of the screen, held for about a bar
+function recCard(t, t0, tEnd, top, mid, unit, bottom, k) {
+  if (t < t0 || t > tEnd + 0.3) return;
+  const u = (t - t0) / 0.32, a = clamp(u * 2.5, 0, 1) * (1 - smooth(tEnd - 0.05, tEnd + 0.25, t));
+  if (a < 0.01) return;
+  const cx = 640, cy = 560, w = 640, h = 420, sc = lerp(1.5, 1, easeOutBack(u, 1.7));
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(cx, cy); ctx.scale(sc, sc);
+  // gold ring burst behind the card
+  const ur = (t - t0) / 0.9;
+  if (ur > 0 && ur < 1) { ctx.strokeStyle = rgba(GOLD, 0.8 * (1 - ur)); ctx.lineWidth = 6 * (1 - ur) + 1; ctx.beginPath(); ctx.ellipse(0, 0, w * 0.5 + 260 * easeOutCubic(ur), h * 0.5 + 200 * easeOutCubic(ur), 0, 0, 7); ctx.stroke(); }
+  ctx.shadowColor = 'rgba(110,80,30,0.25)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
+  rrect(-w / 2, -h / 2, w, h, 22); ctx.fillStyle = 'rgba(255,253,248,0.96)'; ctx.fill(); ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = 'rgba(190,150,70,0.55)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = goldFill(-h / 2, h / 2); rrect(-w / 2, -h / 2, 10, h, 5); ctx.fill();
+  text(top, 0, -h / 2 + 62, F.cnB(30), rgba(SOFT, 1), 'center', 2);
+  goldRule(-w / 2 + 60, w / 2 - 60, -h / 2 + 84);
+  text(k === 'q' ? '这一次' : '回本用了', 0, -h / 2 + 150, F.cn(54), rgba(INK, 1), 'center', 6);
+  const fN = F.num(190), fU = F.cn(84), wN = width(mid, fN), wU = width(unit, fU), x0 = -(wN + wU + 8) / 2, yN = h / 2 - 92;
+  const pul = 1 + 0.04 * beatPulse(t);
+  ctx.save(); ctx.translate(0, yN - 60); ctx.scale(pul, pul); ctx.translate(0, -(yN - 60));
+  goldText(mid, x0, yN, fN, 190); goldText(unit, x0 + wN + 8, yN, fU, 84);
+  ctx.restore();
+  text(bottom, 0, h / 2 - 34, F.cnB(26), rgba(SOFT, 1), 'center', 2);
+  ctx.restore();
+}
+function drawRecCards(t) {
+  const C = HS.crashes;
+  C.forEach((cr, k) => {
+    const nx = C[k + 1], end = nx ? Math.min(cr.t_rec ? cr.t_rec + BAR * 1.0 : 1e9, nx.t_peak - BAR * 0.3) : HS.table - 0.05;
+    if (cr.t_rec) {
+      const [num, unit] = cr.ylabel.split(' ');
+      recCard(t, cr.t_rec + 0.12, end, '第 ' + cr.n + ' 次 · ' + cr.label + ' 年 $' + fmt(cr.peak[1]) + ' 见顶', num, unit,
+        ymDate(cr.peak[0]) + ' → ' + ymDate(cr.rec) + '，才重回 $' + fmt(cr.peak[1]), 'y');
+    } else {
+      recCard(t, cr.t_low + 0.45, HS.table - 0.05, '第 6 次 · 2026 年 $' + fmt(cr.peak[1]) + ' 见顶', '？', '',
+        '已经跌了 37%，回本要多久？', 'q');
+    }
+  });
 }

@@ -37,7 +37,7 @@ function drawChartFrame(i, t) {
     drawRewind(t);
     draw2023(t);
     if (TL.full) { drawConvert(t); drawQuestion2(t); drawRewind2(t); }
-  } else { drawHistHeadline(t); drawTable(t); }
+  } else { drawHistHeadline(t); drawRecCards(t); drawTable(t); }
 }
 function renderFrame(i) {
   const t = i / FPS;

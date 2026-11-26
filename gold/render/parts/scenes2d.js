@@ -265,15 +265,15 @@ function drawOutro(t) {
   const a = smooth(O.t0, O.t0 + 0.35, t);
   ctx.save(); ctx.globalAlpha = a;
   popText(() => { const f = F.cn(110), w1 = width('所以，现在', f), w2 = width('能买吗', f), w3 = width('？', f), x = W / 2 - (w1 + w2 + w3) / 2;
-    shadowText('所以，现在', x, 250, f, rgba(INK, 1), 'left', 0, 0.12); goldText('能买吗', x + w1, 250, f, 110); goldText('？', x + w1 + w2, 250, f, 110); }, t, O.q, W / 2, 220);
+    shadowText('所以，现在', x, 230, f, rgba(INK, 1), 'left', 0, 0.12); goldText('能买吗', x + w1, 230, f, 110); goldText('？', x + w1 + w2, 230, f, 110); }, t, O.q, W / 2, 200);
   const items = [
     [O.p1, '1', '暴跌之后回本：', '快的 1.5 年，慢的 28 年'],
     [O.p2, '2', '别加杠杆：', '它是踩踏的放大器'],
-    [O.p3, '3', '真想买：', '用闲钱、分批买、拿得住'],
+    [O.p3, '3', '真想买：', '只用闲钱，分批慢慢买'],
   ];
   items.forEach(([t0, n, h, body], k) => {
     const u = (t - t0) / 0.35; if (u <= 0) return;
-    const y = 400 + k * 150, x = 400;
+    const y = 370 + k * 140, x = 400;
     ctx.save(); ctx.globalAlpha = a * clamp(u * 2, 0, 1); ctx.translate(60 * (1 - easeOutCubic(u)), 0);
     ctx.shadowColor = 'rgba(110,80,30,0.18)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
     rrect(x, y - 70, 1120, 116, 16); ctx.fillStyle = 'rgba(255,253,248,0.95)'; ctx.fill(); ctx.shadowColor = 'transparent';
@@ -285,11 +285,15 @@ function drawOutro(t) {
   });
   const uc = (t - O.cta) / 0.4;
   if (uc > 0) {
+    // the closing line: don't ask whether you can buy, ask whether you can hold
     ctx.save(); ctx.globalAlpha = a * clamp(uc * 2, 0, 1);
-    const f = F.cn(64), s1 = '你会在 ', s2 = '¥' + fmt(NOW.cny), s3 = ' 上车吗？';
-    const w1 = width(s1, f), w2 = width(s2, F.num(76)), w3 = width(s3, f), x = W / 2 - (w1 + w2 + w3) / 2, y = 930;
-    shadowText(s1, x, y, f, rgba(INK, 1), 'left', 0, 0.12); goldText(s2, x + w1, y + 4, F.num(76), 76); shadowText(s3, x + w1 + w2, y, f, rgba(INK, 1), 'left', 0, 0.12);
-    text('评论区聊聊 · 历史不代表未来，本视频不构成投资建议', W / 2, y + 62, F.cnB(28), rgba(SOFT, 1), 'center', 3);
+    const y = 862, f1 = F.cn(58), f2 = F.cn(70);
+    popText(() => shadowText('不要问能不能买，', W / 2, y, f1, rgba(SOFT, 1), 'center', 4, 0.1), t, O.cta, W / 2, y - 20, 1.3);
+    popText(() => { const s1 = '先问问自己：能不能', s2 = '拿得住', w1 = width(s1, f2, 2), w2 = width(s2, f2, 2), x = W / 2 - (w1 + w2) / 2;
+      shadowText(s1, x, y + 92, f2, rgba(INK, 1), 'left', 2, 0.14); goldText(s2, x + w1, y + 92, f2, 70, 'left', 2);
+      goldRule(x + w1 - 10, x + w1 + w2 + 10, y + 112, 1); }, t, O.cta + HK.beat, W / 2, y + 70, 1.5);
+    const uf = (t - (O.cta + 3 * HK.beat)) / 0.5;
+    if (uf > 0) { ctx.globalAlpha = a * clamp(uf, 0, 1); text('评论区聊聊 · 历史不代表未来，本视频不构成投资建议', W / 2, y + 150, F.cnB(26), rgba(FAINT, 1), 'center', 3); }
     ctx.restore();
   }
   ctx.restore();

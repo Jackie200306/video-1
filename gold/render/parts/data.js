@@ -232,9 +232,9 @@ function shakesDaily() {
 }
 // ---- the history chart (log $, 1970 -> 2026)
 function parHist(t) {
-  const lbK = [[VB(44), 2600], [VB(45.8), 2600], [VB(46.6), 2300], [VB(48), 2100], [VB(48.6), 3200], [VB(49.4), 7000], [VB(51.5), 7000], [VB(52.6), 2600],
-    [VB(54.5), 2600], [VB(55.3), 3800], [VB(58.3), 4400], [VB(59), 3000], [VB(61), 3300], [VB(62), 4200], [VB(63.1), 21000]];
-  const hxK = [[VB(44), 0.12], [VB(62.2), 0.14], [VB(63.1), 0.34]];
+  const lbK = [[VB(44), 2600], [VB(45.8), 2600], [VB(46.6), 2300], [VB(48), 2100], [VB(48.5), 3200], [VB(49.1), 7000], [VB(50.6), 7000], [VB(51.3), 2600],
+    [VB(52.9), 2600], [VB(53.5), 3800], [VB(55.6), 4400], [VB(56.4), 3000], [VB(57.9), 3300], [VB(58.5), 4200], [VB(59.8), 21000]];
+  const hxK = [[VB(44), 0.12], [VB(58.6), 0.14], [VB(59.8), 0.34]];
   let z = -0.35 * (1 - smooth(VB(44), VB(44.7), t));
   for (const c of HS.crashes) {
     z += 0.22 * smooth(c.t_peak - BAR * 0.5, c.t_peak, t) * (1 - smooth(c.t_peak + 0.3, c.t_peak + 0.9, t));
@@ -245,7 +245,7 @@ function parHist(t) {
   z -= 0.40 * bump(t, HS.drop + 0.06, 0.06, 0.35, 1.1);
   const yaw = (20 + 5 * Math.sin(t * 2 * Math.PI / 23)) * Math.PI / 180 + 0.14 * smooth(HS.breakdown, HS.drop, t) * (1 - smooth(HS.drop, HS.drop + 0.7, t));
   return { lb: keyed(t, lbK), hx: keyed(t, hxK), zoom: z, yaw, pitch: (-3 + 1.5 * Math.sin(t * 2 * Math.PI / 31)) * Math.PI / 180,
-    hyMin: -0.5, hyMax: keyed(t, [[VB(44), 0.10], [VB(62.2), 0.10], [VB(63.1), 0.36]]), wF: 3.2, wS: 2.2, span: 0.32 };
+    hyMin: -0.5, hyMax: keyed(t, [[VB(44), 0.10], [VB(58.6), 0.10], [VB(59.8), 0.36]]), wF: 3.2, wS: 2.2, span: 0.32 };
 }
 function shakesHist() {
   const L = [[HS.drop, 30, 0.022, 4.0]];

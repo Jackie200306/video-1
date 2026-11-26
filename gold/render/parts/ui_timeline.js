@@ -212,29 +212,45 @@ function drawQuestion2(t) {
   const dimA = smooth(Q - 0.15, Q + 0.2, t) * (1 - out);
   veil(t, dimA);
   ctx.save();
-  const parts = [['现在，', 0], ['可以', 0.5], ['入场了吗', 1.0], ['？', 1.0]];
-  const push = 1 + 0.04 * smooth(Q, NS.rewind, t);
-  ctx.translate(W / 2, 520); ctx.scale(push, push); ctx.translate(-W / 2, -520);
-  const size = 160, font = F.cn(size), cy = 520 - 40 * out;
-  const tot = parts.reduce((a, p) => a + width(p[0], font), 0); let x = W / 2 - tot / 2;
-  for (const [s, dl] of parts) {
-    const w = width(s, font), u = (t - (Q + dl * P)) / 0.3;
-    if (u > 0) {
-      ctx.save(); ctx.globalAlpha = (1 - out) * clamp(u * 2, 0, 1);
-      const sc = lerp(1.5, 1, easeOutBack(u, 1.8)); ctx.translate(x + w / 2, cy); ctx.scale(sc, sc);
-      if (s === '？') { ctx.rotate(0.1 * Math.sin(t * 9) * beatPulse(t)); goldText(s, -w / 2, 0, font, size); }
-      else shadowText(s, -w / 2, 0, font, rgba(INK, 1), 'left', 0, 0.14);
-      ctx.restore();
+  // card 1: 现在，可以入场了吗？
+  const q1 = 1 - smooth(NS.sub - 0.12, NS.sub + 0.05, t);
+  if (q1 > 0.01) {
+    const parts = [['现在，', 0], ['可以', 0.5], ['入场了吗', 1.0], ['？', 1.0]];
+    const push = 1 + 0.04 * smooth(Q, NS.sub, t);
+    ctx.save(); ctx.translate(W / 2, 560); ctx.scale(push, push); ctx.translate(-W / 2, -560);
+    const size = 170, font = F.cn(size), cy = 600;
+    const tot = parts.reduce((a, p) => a + width(p[0], font), 0); let x = W / 2 - tot / 2;
+    for (const [s, dl] of parts) {
+      const w = width(s, font), u = (t - (Q + dl * P)) / 0.3;
+      if (u > 0) {
+        ctx.save(); ctx.globalAlpha = q1 * clamp(u * 2, 0, 1);
+        const sc = lerp(1.5, 1, easeOutBack(u, 1.8)); ctx.translate(x + w / 2, cy); ctx.scale(sc, sc);
+        if (s === '？') { ctx.rotate(0.1 * Math.sin(t * 9) * beatPulse(t)); goldText(s, -w / 2, 0, font, size); }
+        else shadowText(s, -w / 2, 0, font, rgba(INK, 1), 'left', 0, 0.14);
+        ctx.restore();
+      }
+      x += w;
     }
-    x += w;
+    ctx.restore();
   }
-  const su = expoOut((t - NS.sub) / 0.6);
-  if (su > 0) {
-    ctx.save(); ctx.globalAlpha = (1 - out) * su;
-    const y1 = cy + 140 + 14 * (1 - su);
-    text('先别急。', W / 2, y1, F.cnB(52), rgba(OX, 1), 'center', 4);
-    text('看看历史：黄金每次暴跌之后，多久才回本？', W / 2, y1 + 78, F.cnB(46), rgba(SOFT, 1), 'center', 2);
-    goldRule(W / 2 - 520, W / 2 + 520, y1 + 112, su);
+  // card 2: 先别急。
+  const q2 = smooth(NS.sub - 0.02, NS.sub + 0.1, t) * (1 - smooth(NS.sub2 - 0.12, NS.sub2 + 0.05, t));
+  if (q2 > 0.01) {
+    ctx.save(); ctx.globalAlpha = q2 * (1 - out);
+    popText(() => { const f = F.cn(230), w1 = width('先别急', f), w2 = width('。', f), x = W / 2 - (w1 + w2) / 2;
+      shadowText('先别急', x, 640, f, rgba(INK, 1), 'left', 0, 0.16); goldText('。', x + w1, 640, f, 230); }, t, NS.sub, W / 2, 560, 1.8);
+    ctx.restore();
+  }
+  // card 3: 让我们看看：每次暴跌之后，多久才回本？
+  const q3 = smooth(NS.sub2 - 0.02, NS.sub2 + 0.1, t) * (1 - out);
+  if (q3 > 0.01) {
+    ctx.save(); ctx.globalAlpha = q3;
+    popText(() => text('让我们看看', W / 2, 330, F.cnB(64), rgba(SOFT, 1), 'center', 10), t, NS.sub2, W / 2, 310);
+    popText(() => shadowText('每次暴跌之后，', W / 2, 520, F.cn(124), rgba(INK, 1), 'center', 6, 0.14), t, NS.sub2 + P * 0.5, W / 2, 480);
+    popText(() => { const f = F.cn(150), s1 = '多久', s2 = '才', s3 = '回本', s4 = '？', ws = [s1, s2, s3, s4].map(x => width(x, f, 6)); let x = W / 2 - ws.reduce((a, b) => a + b, 0) / 2;
+      x += goldText(s1, x, 720, f, 150, 'left', 6); x += shadowText(s2, x, 720, f, rgba(INK, 1), 'left', 6, 0.14); x += goldText(s3, x, 720, f, 150, 'left', 6); goldText(s4, x, 720, f, 150, 'left', 6);
+    }, t, NS.sub2 + P, W / 2, 670, 1.6);
+    goldRule(W / 2 - 560, W / 2 + 560, 790, smooth(NS.sub2 + P, NS.sub2 + 2 * P, t));
     ctx.restore();
   }
   ctx.restore();
