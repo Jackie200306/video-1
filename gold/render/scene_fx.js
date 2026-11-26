@@ -49,10 +49,32 @@ function ddAt(x) { const i = clamp(Math.round(x), 0, N - 1); return DD[i]; }
 function isoOf(d) { return new Date(DATE0 + Math.round(d) * 86400000).toISOString().slice(0, 10); }
 
 // ---------------------------------------------------------------- timeline of the head
+// monotone cubic (Fritsch–Carlson) through the beat-locked climb keys: smooth speed, no overshoot
+let CLIMB_M;
+function prepClimb() {
+  const K = HK.climb, n = K.length, d = [];
+  for (let k = 0; k < n - 1; k++) d.push((K[k + 1].i - K[k].i) / (K[k + 1].t - K[k].t));
+  const m = [d[0]];
+  for (let k = 1; k < n - 1; k++) m.push(d[k - 1] * d[k] <= 0 ? 0 : (d[k - 1] + d[k]) / 2);
+  m.push(d[n - 2]);
+  for (let k = 0; k < n - 1; k++) {
+    if (d[k] === 0) { m[k] = m[k + 1] = 0; continue; }
+    const a = m[k] / d[k], b = m[k + 1] / d[k], r = a * a + b * b;
+    if (r > 9) { const s = 3 / Math.sqrt(r); m[k] = s * a * d[k]; m[k + 1] = s * b * d[k]; }
+  }
+  CLIMB_M = m;
+}
+function climbDay(t) {
+  const K = HK.climb; let k = 0;
+  while (k < K.length - 2 && t >= K[k + 1].t) k++;
+  const h = K[k + 1].t - K[k].t, u = clamp((t - K[k].t) / h, 0, 1);
+  const h00 = 2 * u ** 3 - 3 * u * u + 1, h10 = u ** 3 - 2 * u * u + u, h01 = -2 * u ** 3 + 3 * u * u, h11 = u ** 3 - u * u;
+  return h00 * K[k].i + h10 * h * CLIMB_M[k] + h01 * K[k + 1].i + h11 * h * CLIMB_M[k + 1];
+}
 function headDay(t) {
-  const D = HK.drop, iB = dayIdx('2025-07-15'), iPk = PEAK.i, iNow = NOW.i;
+  const D = HK.drop, iPk = PEAK.i, iNow = NOW.i;
   let h;
-  if (t < HK.peakTag) h = lerp(iB, iPk, Math.pow(t / HK.peakTag, 1.3));
+  if (t < HK.peakTag) h = climbDay(Math.max(0, t));
   else if (t < D) h = iPk;
   else if (t < HK.crashEnd) { const u = (t - D) / (HK.crashEnd - D); h = lerp(iPk, iNow, 0.3 * easeInOut(u) + 0.7 * (1 - Math.pow(1 - u, 2.4))); }
   else if (t < HK.rewind) h = iNow;
@@ -89,9 +111,9 @@ function buildCamera() {
     // push in on the high, pull back at the burst
     // camera moves (log zoom): wide open -> creeping push-in with beat kicks -> crash zoom on the high
     // -> blown back by the burst -> punch on the landing -> pulled wide by the rewind -> punch on 2023
-    let z = -0.40 * (1 - smooth(0, 1.3, t));
+    let z = -0.45 * (1 - smooth(0, 2.4, t));
     z += 0.22 * smooth(0.6, HK.peakTag, t) * (1 - smooth(D - 0.01, D + 0.02, t));
-    for (let k = -6; k <= -3; k++) { const b = D + k * HK.beat, a = t - b; if (a > -0.02 && a < 0.6) z += 0.07 * smooth(-0.02, 0.05, a) * Math.exp(-Math.max(0, a - 0.05) / 0.22); }
+    for (const k of [-10, -8, -6, -5, -4, -3]) { const b = D + k * HK.beat, a = t - b, amp = k <= -8 ? 0.05 : 0.07; if (a > -0.02 && a < 0.6) z += amp * smooth(-0.02, 0.05, a) * Math.exp(-Math.max(0, a - 0.05) / 0.22); }
     z += (0.48 * smooth(HK.peakTag - 0.04, HK.peakTag + 0.16, t) + 0.10 * smooth(HK.peakTag + 0.2, D, t)) * (1 - smooth(D - 0.01, D + 0.02, t));
     z -= 0.38 * bump(t, D + 0.06, 0.06, 0.35, 1.1);
     z += 0.34 * bump(t, HK.crashEnd + 0.1, 0.1, 0.22, 0.45);
@@ -270,10 +292,17 @@ function drawRails(c, t) {
     g.addColorStop(0, 'rgba(150,118,60,0)'); g.addColorStop(0.6, 'rgba(150,118,60,0.20)'); g.addColorStop(1, 'rgba(150,118,60,0.08)');
     ctx.strokeStyle = g; ctx.lineWidth = 1.2; ctx.setLineDash([8, 10]);
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
+    const ms = HK.climb.find(k => k.level === p && k.level < 1200);
+    const flash = ms ? bump(t, ms.t, 0.02, 0.12, 0.9) : 0;
+    if (flash > 0.01) {
+      const g2 = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+      g2.addColorStop(0, 'rgba(240,178,50,0)'); g2.addColorStop(0.7, `rgba(240,178,50,${0.85 * flash})`); g2.addColorStop(1, 'rgba(240,178,50,0)');
+      ctx.strokeStyle = g2; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
     const lp = proj(c, c.D + c.dist * 0.40, Y);
     const inTitle = t > HK.y2023 - 0.3 && lp && Math.abs(lp.x - (W / 2 + 140)) < 460 && lp.y > 120 && lp.y < 560;
     if (lp && lp.y > 150 && lp.y < H - 140 && lp.x < W - 120 && !inTitle) {
-      ctx.font = F.num(Math.round(clamp(24 * lp.s, 18, 28))); ctx.fillStyle = rgba(FAINT, 0.95);
+      ctx.font = F.num(Math.round(clamp(24 * lp.s, 18, 28))); ctx.fillStyle = rgba(FAINT, 0.95 * (1 - flash));
       ctx.fillText('¥' + fmt(p), lp.x, lp.y - 6);
     }
   }
@@ -810,6 +839,24 @@ function drawFrameRule() {
   ctx.strokeStyle = 'rgba(176,138,64,0.18)'; ctx.lineWidth = 1; ctx.strokeRect(39.5, 39.5, W - 79, H - 79); ctx.restore();
 }
 
+// 「突破 ¥1,000」 pops beside the head on each milestone beat
+function drawMilestones(c, t, hp) {
+  if (!hp) return;
+  for (const m of HK.climb) {
+    if (!m.level || m.level >= 1200) continue;
+    const age = t - m.t; if (age < -0.02 || age > 0.62) continue;
+    const u = easeOutBack(age / 0.26, 2.2), a = smooth(-0.02, 0.06, age) * (1 - smooth(0.36, 0.5, age));
+    const y = proj(c, c.D, wY(c, m.level)); if (!y) continue;
+    const x = hp.x + (t < HK.drop ? bubbleR(c, t) * smooth(0.2, 0.8, t) : 0) + 34, yy = y.y - 14 - 26 * easeOutCubic(age / 0.9);
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(x, yy); ctx.scale(u, u);
+    const f1 = F.cnB(30), f2 = F.num(52), w1 = width('突破 ', f1);
+    halo('突破 ', 0, 0, f1, 'left', 10); halo('¥' + fmt(m.level), w1, 0, f2, 'left', 14);
+    text('突破 ', 0, 0, f1, rgba(OX, 1));
+    goldText('¥' + fmt(m.level), w1, 0, f2, 52);
+    ctx.restore();
+  }
+}
+
 // radial zoom blur on fast camera punches (scene only, type stays crisp)
 function zoomBlur(c, hp) {
   const v = CAM.zv[c.i], amt = clamp((Math.abs(v) - 0.6) / 2.5, 0, 1);
@@ -850,6 +897,7 @@ function renderFrame(i) {
   drawEffects(c, t);
   drawPeakCard(c, t, hp);
   drawHeadChip(c, t, hp);
+  drawMilestones(c, t, hp);
   drawHUD(c, t);
   drawHeadline(t);
   drawSlam(c, t, br);
@@ -878,6 +926,7 @@ window.renderFrame = renderFrame;
   await document.fonts.load('italic 40px DMSerif', '0123456789%.−'); await document.fonts.load('40px DMSerif', '0123456789$¥,.');
   await document.fonts.load('600 40px Cormorant', 'GOLDXAUREWINDCHAPTERONE');
   prepStatic();
+  prepClimb();
   buildCamera();
   // where the bubble bursts (screen position just before the drop)
   const ib = Math.round(HK.drop * FPS) - 1, cb = camAt(ib), hb = projDay(cb, cb.D);

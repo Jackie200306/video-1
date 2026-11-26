@@ -75,6 +75,11 @@ add(bubble_stretch(D - 0.1), 0.0, -24, send=0.1)
 add(riser(D - 0.05, True), 0.0, -23, send=0.2)
 for k in (-6, -5, -4, -3):
     add(tick(1900, 0.04), D + k * P, -30, pan=0.3 * (-1) ** k)
+# a chime on every round number the climb breaks through (each lands on a beat)
+NOTES = [1046.5, 1174.7, 1318.5, 1568.0, 1760.0]
+for k, m in enumerate([m for m in HK['climb'] if m['level'] and m['level'] < 1200]):
+    add(bell(NOTES[k], 1.4, 0.6), m['t'], -22, pan=0.25, send=0.3)
+    add(pop(), m['t'], -22, pan=0.3)
 add(pop(), HK['peakTag'], -17, pan=0.25)
 add(bell(1318.5, 2.0, 0.8), HK['peakTag'] + 0.02, -21, pan=0.2, send=0.35)
 add(tink(), D - 0.17, -18, pan=0.15)
@@ -96,8 +101,9 @@ for k in range(3):
     add(pop(), HK['sub'] + 0.0875 * k, -17, pan=(k - 1) * 0.5)
 # rewind
 rw = HK['y2023'] - HK['rewind']
-add(whoosh(0.5, 3000, 300), HK['rewind'] - 0.15, -18)
-add(rewind_sfx(rw), HK['rewind'], -24, send=0.15)
+add(whoosh(0.7, 3000, 250), HK['rewind'] - 0.2, -17, send=0.2)
+for k in range(int(rw / (P / 2))):                           # clock ticking on the eighth notes
+    add(tick(1500 if k % 2 == 0 else 1150, 0.04), HK['rewind'] + k * P / 2, -27 - (k % 2) * 3, pan=0.2 * (-1) ** k)
 # 2023
 add(impact(0.8), HK['y2023'], -11, send=0.4)
 add(bell(880, 2.6, 0.8), HK['y2023'] + 0.01, -17, send=0.45)
@@ -118,20 +124,23 @@ if song_path:
                          check=True, capture_output=True).stdout
     song = np.frombuffer(raw, '<f4').reshape(-1, 2).astype(np.float64)
     s0 = TL['bgm']['song_start']
-    R0, R1 = HK['rewind'], HK['y2023']
-    ts = s0 + t                                                 # forward song time
-    rev = (t >= R0) & (t < R1)
-    ts_rev = s0 + R0 - 2.0 * (t - R0)                           # 2x backwards (DJ rewind)
-    def take(x):
-        i = np.clip(np.round(x * SR).astype(int), 0, len(song) - 1)
-        return song[i]
-    fwd = take(ts); back = take(ts_rev)
-    # rewind: low-passed sweep, a little quieter
-    back = signal.sosfilt(signal.butter(2, 2500, 'low', fs=SR, output='sos'), back, axis=0) * 0.75
-    xf = 0.03
-    w = np.clip((t - R0) / xf, 0, 1) * np.clip((R1 - t) / xf + 0.0, 0, 1)
-    w = np.where(rev, w, 0.0)
-    bgm = fwd * (1 - w)[:, None] + back * w[:, None]
+    i_s = int(round(s0 * SR))
+    bgm = song[i_s:i_s + n].copy()
+    if len(bgm) < n:
+        bgm = np.concatenate([bgm, np.zeros((n - len(bgm), 2))])
+    # intro: the music opens up from a muffled low-pass over the first three beats
+    def sweep_lp(seg, f0, f1, curve=1.0):
+        out = seg.copy(); blk_ = 256; zi = None
+        for k in range(0, len(seg), blk_):
+            u = (k / len(seg)) ** curve
+            sos = signal.butter(2, f0 * (f1 / f0) ** u, 'low', fs=SR, output='sos')
+            if zi is None:
+                zi = signal.sosfilt_zi(sos)[:, :, None] * seg[0][None, None, :]
+            out[k:k + blk_], zi = signal.sosfilt(sos, seg[k:k + blk_], axis=0, zi=zi)
+        return out
+    ie = int(3 * P * SR)
+    bgm[:ie] = sweep_lp(bgm[:ie], 450, 19000, 1.6)
+    bgm[:ie] *= db(-10 * (1 - np.arange(ie) / ie) ** 1.5)[:, None]          # and swells in
     # pre-drop: sweep a low-pass down over the last two beats and pull the level back, then leave
     # a near-silent gap so the crack is heard alone; the drop comes back full band on the burst
     a0, a1 = HK['peakTag'], D

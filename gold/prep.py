@@ -90,7 +90,7 @@ NOW = SER[-1]
 # Analysed with ../bitcoin/bgm.py onset tools: 112.8 BPM, the first drop at 17.403 s.
 BEAT = 0.5319
 SONG_DROP = 17.403
-HOOK_BEATS_BEFORE_DROP = 6                        # start at the song's breakdown (low end drops out)
+HOOK_BEATS_BEFORE_DROP = 12                       # 3 bars: the softer stretch before the breakdown
 SONG_START = SONG_DROP - HOOK_BEATS_BEFORE_DROP * BEAT
 DROP = HOOK_BEATS_BEFORE_DROP * BEAT              # video time of the drop  (3.191 s)
 
@@ -110,6 +110,13 @@ HOOK = dict(
     rewind=bt(8),            # time rewinds to 2023
     y2023=bt(12),            # "2023" slam
 )
+# the climb is choreographed on the beat: each round-number level is crossed on a beat
+def first_cross(level, after='2025-01-01'):
+    for k in range(IDX[after], len(SER)):
+        if SER[k][2] >= level:
+            return SER[k][0]
+CLIMB = [(-12, '2025-01-01', None)] + [(n, first_cross(l), l) for n, l in ((-10, 700), (-8, 800), (-6, 900), (-4, 1000), (-3, 1100))] + [(-2, PEAK[0], 1200)]
+HOOK['climb'] = [dict(t=bt(n), date=dd, i=IDX[dd], level=l) for n, dd, l in CLIMB]
 T = bt(12) + 1.25
 nF = int(round(T * FPS))
 
@@ -131,4 +138,4 @@ print('series %s -> %s (%d days)' % (SER[0][0], NOW[0], len(SER)))
 print('peak %s  $%.2f  ¥%.1f/g' % (PEAK[0], PEAK[1], PEAK[2]))
 print('now  %s  $%.2f  ¥%.1f/g   drawdown usd %.1f%%  cny %.1f%%' % (NOW[0], NOW[1], NOW[2], dd_usd * 100, dd_cny * 100))
 print('song start %.3f s, drop at video %.3f s, T=%.2f s, %d frames' % (SONG_START, DROP, T, nF))
-print({k: round(v, 3) for k, v in HOOK.items()})
+print({k: round(v, 3) for k, v in HOOK.items() if not isinstance(v, list)})

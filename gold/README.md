@@ -11,17 +11,19 @@ camera back, a punch on the landing, and a radial zoom blur on the fast moves.
 
 ## Hook storyboard (beat-synced to 《We Never》, 112.8 BPM)
 
+The song starts 3 bars before its first drop (11.02 s into the song), opening up from a muffled
+low-pass, so the bubble bursts on the drop (17.40 s into the song) at 6.38 s in the video.
+
 | video time | beat | what happens |
 |---|---|---|
-| 0.00 | song 14.21 s (breakdown) | gold line climbs from Aug 2025; a glass bubble inflates around the price |
-| 2.13 | −2 | the peak: 历史最高 ¥1,250/克 · $5,595/盎司 (2026-01-29); music low-passes and pulls back |
-| 2.99 | — | near-silent gap, the bubble cracks |
-| **3.19** | **drop (song 17.40 s)** | bubble bursts: glass shatter + impact, 「黄金暴跌」, the line falls to today |
-| 4.26 | +2 | −39.5% from the high · 不到 10 个月，从 ¥1,250 跌到 ¥756 |
-| 5.32 | +4 | 「现在，还能买吗？」 one word per half-beat |
-| 6.38 | +6 | 抄底，还是接飞刀？ |
-| 7.45 | +8 | 让我们把时间倒回: the camera flies back along the line and the music plays backwards at 2x |
-| 9.57 | +12 | 「2023 · 这一轮大涨，要从这一年说起」 the music resumes on the bar |
+| 0.00 | −12 | wide shot dollies in; 「黄金，一路狂飙」; the line climbs from Jan 2025 |
+| 1.06 / 2.13 / 3.19 / 4.26 / 4.79 | −10 / −8 / −6 / −4 / −3 | the line breaks ¥700 / ¥800 / ¥900 / ¥1,000 / ¥1,100 exactly on the beat (rail flash, 「突破」, chime, zoom kick) |
+| 5.32 | −2 | 历史最高 ¥1,250/克 · $5,595/盎司 (2026-01-29): crash zoom onto the bubble, rays; music low-passes and pulls back |
+| **6.38** | **drop** | bubble bursts: glass + impact, camera blown back, 「黄金暴跌」, the line falls to today |
+| 7.98 | +3 | landing punch-in: −39.5% · 不到 10 个月，从 ¥1,250 跌到 ¥756 |
+| 8.51 / 9.57 | +4 / +6 | 「现在，还能买吗？」 / 抄底，还是接飞刀？ |
+| 10.64 | +8 | 让我们把时间倒回: the camera flies back along the line (music keeps playing forward) |
+| 12.77 | +12 | 「2023 · 这一轮大涨，要从这一年说起」 |
 
 ## Build
 
