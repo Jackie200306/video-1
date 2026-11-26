@@ -18,7 +18,7 @@ canvas{display:block}
 <body><canvas id="c" width="1920" height="1080"></canvas>
 <script>
 const th = new URLSearchParams(location.search).get('theme') || 'cream';
-const sc = document.createElement('script'); sc.src = th === 'lux' ? '/render/scene_lux.js' : '/render/scene.js';
+const sc = document.createElement('script'); sc.src = th === 'lux' ? '/render/scene_lux.js' : th === 'fx' ? '/render/scene_fx.js' : '/render/scene.js';
 document.body.appendChild(sc);
 </script>
 </body></html>
