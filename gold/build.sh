@@ -11,6 +11,7 @@ OUT=${OUT:-output/gold_hook_${THEME}.mp4}
 mkdir -p build output
 [ -f fonts/NotoSansCJKsc-Black.otf ] || ./fetch_fonts.sh
 
+if [ "$THEME" = full ]; then export FULL=1; ./assemble.sh; OUT=${OUT_FULL:-output/gold_full.mp4}; fi
 python3 prep.py
 python3 audio.py ${BGM:-}
 AUDIO=build/mix.wav

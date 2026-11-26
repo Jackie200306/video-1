@@ -111,6 +111,130 @@ add(impact(0.8), HK['y2023'], -11, send=0.4)
 add(bell(880, 2.6, 0.8), HK['y2023'] + 0.01, -17, send=0.45)
 add(shimmer(1.2, 50), HK['y2023'], -20, pan=0.2, send=0.3)
 
+# ================================================================= full video
+if TL.get('full'):
+    TLN, NS, HS, LV, INF, OUT = TL['timeline'], TL['nowsec'], TL['history'], TL['lev'], TL['infl'], TL['outro']
+    BAR = 4 * P
+    def card(t0, pan=0.35, g=0):
+        add(whoosh(0.32, 500, 4000), t0 - 0.22, -27 + g, pan=pan); add(pop(), t0, -19 + g, pan=pan)
+    for ch in TLN['chapters']:
+        add(whoosh(0.45, 300, 2500), ch['t'] - 0.25, -24, pan=-0.3)
+    BELLS = [1318.5, 1568.0, 1760.0, 2093.0]
+    nm = 0
+    for e in TLN['events']:
+        t0, k = e['t'], e['kind']
+        card(t0)
+        if k == 'milestone':
+            add(bell(BELLS[nm % 4], 1.6, 0.7), t0 + 0.02, -20, pan=0.2, send=0.35); nm += 1
+        elif k == 'shock':
+            add(thump(68, 0.5), t0, -15); add(tick(900, 0.06), t0 + 0.01, -24)
+        elif k == 'info':
+            add(tick(1250, 0.05), t0 + 0.01, -24, pan=0.3)
+        elif k in ('dip',):
+            add(thump(60, 0.45), t0, -17)
+        elif k == 'bounce':
+            add(bell(1046.5, 1.4, 0.6), t0 + 0.02, -22, pan=0.2, send=0.3)
+        elif k == 'peak':
+            add(riser(BAR * 0.5, True), t0 - BAR * 0.5, -22, send=0.2)
+            add(bell(880, 3.0, 1.0), t0, -12, send=0.45); add(bell(1318.5, 3.0, 0.8), t0 + 0.02, -15, send=0.45)
+            add(shimmer(1.4, 60), t0, -17, pan=0.2, send=0.3); add(impact(0.5), t0, -16, send=0.4)
+        elif k == 'crash':
+            big = e['date'] == '2026-01-30'
+            add(fall_whistle(0.7), t0 - 0.7, -24, pan=0.1)
+            if big:
+                add(glass_shatter(1.1), t0 - 0.005, -11, send=0.35)
+            add(impact(0.9 if big else 0.7), t0, -10 if big else -13, send=0.4)
+            if e['date'] in ('2025-10-21', '2026-01-30'):
+                add(thump(80, 0.4), t0 + 0.03, -14)
+    # the landing and the drawdown
+    add(thump(55, 0.6), NS['card'], -12)
+    add(thump(80, 0.4), NS['card'] + 2 * P, -14); add(pop(), NS['card'] + 2 * P + 0.01, -16, pan=-0.2)
+    add(whoosh(1.4, 2200, 250), NS['overview'] - 0.1, -21, send=0.3)
+    # ¥756/克 -> $/盎司, row by row
+    for k in range(5):
+        add(pop(), NS['convert'] + k * P, -18 + (k == 3) * 2, pan=(k - 2) * 0.2)
+        if k in (1, 2):
+            add(tick(1700, 0.05), NS['convert'] + k * P, -24)
+    add(bell(1568, 2.2, 0.8), NS['convert'] + 3 * P + 0.01, -17, send=0.4)
+    add(shimmer(1.0, 40), NS['convert'] + 3 * P, -21, pan=0.2, send=0.3)
+    # 现在，可以入场了吗？
+    add(whoosh(0.35, 400, 3200), NS['question'] - 0.25, -22, pan=0.2)
+    for k, dl in enumerate((0, 0.5, 1.0)):
+        add(thump(70 + 12 * k, 0.4), NS['question'] + dl * P, -13 + 2 * (k == 2))
+        add(pop(), NS['question'] + dl * P, -18, pan=(k - 1) * 0.4)
+    add(pop(), NS['sub'], -17); add(pop(), NS['sub'] + P, -18, pan=0.3)
+    # back to 1971: whoosh, clock running backwards, the cut
+    rw = NS['cut'] - NS['rewind']
+    add(whoosh(0.8, 3000, 250), NS['rewind'], -17, send=0.2)
+    for k in range(int(rw / (P / 2))):
+        add(tick(1500 if k % 2 == 0 else 1150, 0.04), NS['rewind'] + 0.15 + k * P / 2, -27 - (k % 2) * 3, pan=0.2 * (-1) ** k)
+    add(whoosh(2.2, 150, 2600), NS['cut'] - 2.2, -18, send=0.4)
+    add(impact(0.7), NS['cut'], -14, send=0.4); add(bell(660, 2.4, 0.6), NS['cut'] + 0.01, -21, send=0.45)
+    # history: peaks ring, lows hit, recoveries chime
+    for cr in HS['crashes']:
+        tp, tl_ = cr['t_peak'], cr['t_low']
+        card(tp - BAR * 0.5 + 0.12, pan=-0.3, g=-2)
+        add(bell(1046.5 if cr['n'] != 2 else 880, 2.4, 0.9), tp, -16 if cr['n'] != 2 else -13, send=0.45)
+        add(shimmer(1.0, 40), tp, -21, pan=0.2, send=0.3)
+        if cr['n'] != 2:
+            add(fall_whistle(min(1.2, tl_ - tp)), tl_ - min(1.2, tl_ - tp), -23, pan=0.1)
+            add(impact(0.75), tl_, -12, send=0.4)
+        else:
+            add(thump(60, 0.6), tl_, -14)
+        add(thump(80, 0.4), tl_ + 0.02, -15)
+        if cr.get('t_mid'):
+            add(impact(0.6), cr['t_mid'], -15, send=0.3)
+        if cr.get('t_rec'):
+            tr = cr['t_rec']
+            add(bell(1318.5, 2.2, 0.8), tr + 0.25, -15, send=0.45); add(bell(1760, 2.0, 0.6), tr + 0.27, -19, send=0.45)
+            add(shimmer(1.2, 50), tr + 0.25, -19, pan=0.2, send=0.3)
+    # the 1980 bubble: inflates over the breakdown, bursts on the second drop
+    tb0, DR = HS['bubble'], HS['drop']
+    add(bubble_stretch(DR - tb0 - 0.1), tb0, -25, send=0.1)
+    add(riser(DR - tb0 - 0.05, True), tb0, -24, send=0.2)
+    add(tink(), DR - 0.17, -18, pan=0.15)
+    add(glass_shatter(1.4), DR - 0.005, -6, send=0.35)
+    add(impact(1.0), DR, -9, send=0.4)
+    add(whoosh(0.5, 3500, 250), DR + 0.02, -18)
+    # the table
+    for k in range(6):
+        add(tick(1900 - 80 * k, 0.04), HS['table'] + 0.15 + k * P / 2, -22, pan=(k - 2.5) * 0.15)
+    add(pop(), HS['table'] + 0.15 + 3.5 * P, -17)
+    # leverage
+    add(whoosh(0.5, 300, 3000), LV['t0'] - 0.2, -20, send=0.2); add(thump(64, 0.5), LV['t0'], -13)
+    add(pop(), LV['t0'] + 2 * P, -16); add(bell(1318.5, 2.0, 0.7), LV['t0'] + 2 * P + 0.01, -19, send=0.4)
+    add(whoosh(0.4, 400, 3000), LV['example'] - 0.2, -22, pan=-0.3)
+    add(thump(90, 0.4), LV['example'], -15); add(thump(70, 0.5), LV['example'] + P, -14); add(pop(), LV['example'] + 2 * P, -16)
+    add(fall_whistle(2.2 * P), LV['fall'], -20, pan=0.2)
+    add(impact(0.9), LV['boom'], -10, send=0.4); add(thump(50, 0.7), LV['boom'] + 0.01, -12)
+    add(tick(800, 0.08), LV['boom'] + P, -22)
+    tr4 = [LV['cascade'] + 2 * P, LV['cascade'] + 3.5 * P, LV['cascade'] + 4.5 * P, LV['cascade'] + 5.25 * P]
+    add(whoosh(0.4, 400, 3000), LV['cascade'] - 0.2, -22, pan=-0.3)
+    for k, t0 in enumerate(tr4):
+        add(impact(0.55 + 0.1 * k), t0, -15 + k, send=0.35); add(thump(85 - 8 * k, 0.4), t0, -14)
+        add(glass_shatter(0.35 + 0.1 * k), t0, -20 + k, pan=0.3 - 0.2 * k)
+    add(fall_whistle(tr4[3] - tr4[0] + P), tr4[0], -21, pan=0.1)
+    add(whoosh(0.5, 300, 3000), LV['loop'] - 0.2, -21)
+    for k in range(4):
+        add(pop(), LV['loop'] + k * P, -17, pan=[0, 0.4, 0, -0.4][k])
+    for k in range(4):
+        add(tick(1300, 0.05), LV['loop'] + (4 + k * 0.5) * P, -23, pan=0.3)
+    # inflation
+    add(whoosh(0.5, 300, 3000), INF['t0'] - 0.2, -20, send=0.2); add(thump(64, 0.5), INF['t0'], -14)
+    add(riser(INF['labels'] - INF['chart'], False), INF['chart'], -25, send=0.2)
+    add(bell(1568, 2.4, 0.8), INF['labels'], -15, send=0.4); add(shimmer(1.2, 50), INF['labels'], -19, send=0.3)
+    add(pop(), INF['labels'] + P, -17, pan=0.3)
+    add(thump(55, 0.6), INF['real'], -13); add(bell(523, 2.6, 0.5), INF['real'] + 0.02, -19, send=0.5)
+    # outro
+    add(whoosh(0.5, 300, 3000), OUT['t0'] - 0.2, -20, send=0.2); add(thump(64, 0.5), OUT['q'], -13); add(pop(), OUT['q'], -17)
+    for k, key in enumerate(('p1', 'p2', 'p3')):
+        add(whoosh(0.3, 600, 4000), OUT[key] - 0.2, -25, pan=-0.4); add(pop(), OUT[key], -17, pan=-0.2)
+        add(bell([1046.5, 1318.5, 1568.0][k], 1.8, 0.6), OUT[key] + 0.02, -21, send=0.35)
+    add(bell(880, 3.5, 0.8), OUT['cta'], -15, send=0.5); add(shimmer(1.6, 60), OUT['cta'], -19, pan=0.2, send=0.3)
+    # section cuts: a soft whoosh into each
+    for tc in (LV['t0'], INF['t0'], OUT['t0']):
+        add(whoosh(0.6, 2500, 300), tc - 0.3, -22, send=0.2)
+
 # reverb
 ir_t = tt(1.6); ir = rng.normal(0, 1, len(ir_t)) * np.exp(-ir_t / 0.4); ir = lp(ir, 6000); ir /= np.sqrt(np.sum(ir ** 2))
 L += signal.fftconvolve(FX_L, ir)[:N] * 0.6; R += signal.fftconvolve(FX_R, np.roll(ir, 211))[:N] * 0.6
@@ -163,6 +287,10 @@ if song_path:
     gap = (t >= D - 0.2) & (t < D)
     g[gap] *= db(-16 * np.clip((t[gap] - (D - 0.2)) / 0.06, 0, 1))
     bgm *= g[:, None]
+    if TL.get('full'):
+        DR = TL['history']['drop']
+        gap2 = (t >= DR - 0.18) & (t < DR)
+        bgm[gap2] *= db(-14 * np.clip((t[gap2] - (DR - 0.18)) / 0.05, 0, 1))[:, None]
     # level: steady under the SFX
     blk = int(0.4 * SR)
     r = np.sqrt(np.mean(bgm[: len(bgm) // blk * blk].reshape(-1, blk, 2) ** 2, axis=(1, 2)))

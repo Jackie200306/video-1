@@ -1,13 +1,20 @@
-# 黄金暴跌，现在还能买吗？· Gold crash video (work in progress)
+# 黄金暴跌，现在还能买吗？· Gold crash video
 
-1920×1080 / 60 fps. So far only the opening hook (~10.8 s) is built:
-`output/gold_hook_fx.mp4` (current) and `output/gold_hook_lux.mp4` (earlier flat look).
+1920×1080 / 60 fps, 2:56. The whole video runs on 《We Never》 from 8.89 s into the song to its
+end, and every cut, card and hit sits on the song's beat grid (112.8 BPM, 8-bar phrases).
 
-The `fx` look (`render/scene_fx.js`) brings the Bitcoin video's effects onto the ivory background:
-3D follow camera with springy banking, glowing gold line with beat pulses running into the head,
-a comet tail, embers and falling sparks, peak rays and rings, impact rings, cards and slams, plus
-camera moves: a wide open, beat-kick push-ins, a crash zoom on the high, the burst blowing the
-camera back, a punch on the landing, and a radial zoom blur on the fast moves.
+- `output/gold_full.mp4`: the full video.
+- `output/gold_hook_fx.mp4`: the approved opening on its own.
+
+| video | song section | content |
+|---|---|---|
+| 0:00–0:18 | intro → first drop | the hook (storyboard below) |
+| 0:17–1:10 | first chorus (32 bars) | 2023 → 2026 on the daily ¥/克 chart: 22 dated events (Fed hikes and cuts, SVB, the Israel–Hamas war, central-bank buying, tariffs, $3,000 / $4,000 / $5,000, the high, the Warsh nomination, the Iran war, the 2026 hike, margin-call selling), chapter titles, slams |
+| 1:10–1:25 | second intro | today: ¥756/克 ≈ $3,525/盎司 (×31.1035 ÷ 6.67), 「现在，可以入场了吗？」, rewind to 1971 |
+| 1:25–2:08 | second drop | log-scale $ chart since 1971: the crashes of 1974, 1980 (its bubble bursts on the drop), 2008, 2011, 2020 and 2026, each with its drawdown and the time it took to regain the old high; summary table |
+| 2:08–2:25 | variation | why crashes cascade: 10× leverage, a 10% fall wipes out the margin, forced selling, layers of liquidations, the loop |
+| 2:25–2:37 | | gold vs US CPI since 1971 (×100 vs ×8.5), and the 1980 top in today's money ($3,681) took 45 years |
+| 2:37–2:56 | outro | 所以，现在能买吗？ three takeaways, 你会在 ¥756 上车吗？ |
 
 ## Hook storyboard (beat-synced to 《We Never》, 112.8 BPM)
 
@@ -30,15 +37,29 @@ song) at 8.51 s in the video. During the rewind the music keeps playing forward.
 ## Build
 
 ```bash
-./fetch_fonts.sh                                   # SIL OFL fonts, not committed
-BGM=/path/to/we_never.m4a THEME=fx ./build.sh      # -> output/gold_hook_fx.mp4
+./fetch_fonts.sh                                    # SIL OFL fonts, not committed
+BGM=/path/to/we_never.m4a THEME=full ./build.sh     # -> output/gold_full.mp4 (FULL=1 timeline)
+BGM=/path/to/we_never.m4a THEME=fx ./build.sh       # -> output/gold_hook_fx.mp4 (opening only)
 ```
+
+`render/full.js` is assembled by `assemble.sh` from `render/parts/`:
+`head.js` (helpers, palette, type), `data.js` (datasets, beat-locked head paths, the spring camera
+tracks), `chart.js` (the 3D chart: line, glow, particles, bubbles), `ui_timeline.js`, `ui_history.js`,
+`scenes2d.js` (leverage, inflation, outro) and `main.js` (frame loop, boot).
 
 `THEME=lux` is the current look (ivory studio light, metallic gold, deep emerald for falls,
 serif type). `cream`, `sun` and `blue` are the earlier drafts in `render/scene.js`.
 The BGM is not committed: it is the user's own copy of a copyrighted track.
 
 ## Data
+
+- History: monthly averages since 1970 from `data/gold_monthly.csv` (github.com/datasets/gold-prices),
+  with the commonly quoted extremes put back in: $195 (1974-12-30), $104 (1976-08-25), $850 (1980-01-21),
+  $297 (1982-06), $253 (1999-07-20), $1,011 (2008-03-17), $713 (2008-10-24), $1,921 (2011-09-06),
+  $1,046 (2015-12-17), $2,075 (2020-08-07), $1,615 (2022-09-28). Recovery = first time the old high
+  was regained: 1978-07, 2008-01, 2009-10, 2020-07, 2023-12.
+- Inflation: US CPI-U from `data/cpi_us_monthly.csv` (github.com/datasets/cpi-us), to 2026-09.
+  $850 × CPI(2025-04) / CPI(1980-01) ≈ $3,505, which gold first reached on 2025-04-22.
 
 - 2024-03-02 → 2026-11-25: daily XAU/USD and XAU/CNY snapshots from the
   `@fawazahmed0/currency-api` npm package (`data/xau_daily_npm.txt`).
