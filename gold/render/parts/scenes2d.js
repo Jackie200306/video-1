@@ -28,35 +28,52 @@ function stamp(s, x, y, t0, t, size = 150, col = OX, rot = -0.12) {
   text(s, 0, 0, f, rgba(col, 0.95), 'center', 10);
   ctx.restore();
 }
-// ---------------------------------------------------------------- leverage
+// ---------------------------------------------------------------- leverage (one idea at a time)
+function bubble(x, y, w, h, tailX, tailY, col) {
+  ctx.save(); ctx.shadowColor = 'rgba(110,80,30,0.22)'; ctx.shadowBlur = 26; ctx.shadowOffsetY = 10;
+  rrect(x, y, w, h, 28); ctx.fillStyle = 'rgba(255,253,248,0.97)'; ctx.fill(); ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = rgba(col, 0.8); ctx.lineWidth = 3; ctx.stroke();
+  const bx = clamp(tailX, x + 50, x + w - 50), by = tailY < y ? y : y + h;
+  ctx.beginPath(); ctx.moveTo(bx - 22, by); ctx.lineTo(tailX, tailY); ctx.lineTo(bx + 22, by); ctx.closePath();
+  ctx.fillStyle = 'rgba(255,253,248,0.97)'; ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,253,248,1)'; ctx.fillRect(bx - 20, by - (tailY < y ? -2 : 4), 40, 6);
+  ctx.restore();
+}
+function avatar(x, y, label, col) {
+  ctx.save(); ctx.shadowColor = 'rgba(110,80,30,0.25)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+  ctx.fillStyle = rgba(col, 1); ctx.beginPath(); ctx.arc(x, y, 54, 0, 7); ctx.fill(); ctx.restore();
+  text(label, x, y + 17, F.cn(label.length > 1 ? 34 : 50), '#fff', 'center');
+}
 function drawLeverage(t) {
   const P = HK.beat, L = LV;
   // A. 为什么会暴跌？ -> 关键词：杠杆
   {
-    const a = fadeIO(t, L.t0, L.example + 0.2, 0.2, 0.35);
+    const a = fadeIO(t, L.t0, L.pic, 0.2, 0.3);
     if (a > 0.01) {
       ctx.save(); ctx.globalAlpha = a;
       popText(() => shadowText('为什么会暴跌？', W / 2, 470, F.cn(130), rgba(INK, 1), 'center', 6, 0.14), t, L.t0, W / 2, 430);
       popText(() => { const f = F.cn(84), w1 = width('关键词：', f), w2 = width('杠杆', f); const x = W / 2 - (w1 + w2) / 2;
-        shadowText('关键词：', x, 640, f, rgba(SOFT, 1), 'left', 0, 0.1); goldText('杠杆', x + w1, 640, f, 84); }, t, L.t0 + 2 * P, W / 2, 610, 1.6);
+        shadowText('关键词：', x, 640, f, rgba(SOFT, 1), 'left', 0, 0.1); goldText('杠杆', x + w1, 640, f, 84); }, t, L.kw, W / 2, 610, 1.6);
       ctx.restore();
     }
   }
-  // B. the 10x example
-  const exA = fadeIO(t, L.example, L.cascade + 0.1, 0.25, 0.4);
-  if (exA > 0.01) {
-    ctx.save(); ctx.globalAlpha = exA;
-    drawHL('用 {10 倍杠杆} 买黄金', 110, 190, 64, 1, null, 'GOLD  ·  暴跌的推手');
-    const bx = 470, base = 900, unit = 5.6;                 // ¥1 万 = 5.6 px
-    const fall = smooth(L.fall, L.fall + 2.2 * P, t);        // price −10%
-    const own = 10 * (1 - fall), borrowed = 90, total = own + borrowed;
-    const hOwn = own * unit, hB = borrowed * unit;
-    const uB = easeOutCubic((t - (L.example + P)) / 0.35), uO = easeOutCubic((t - L.example) / 0.35);
-    // own money (gold), then borrowed money (grey, hatched) stacked on top
+  // B–E share one picture: own money vs borrowed money, the price, the two voices, the forced sale
+  const pa = fadeIO(t, L.pic - 0.1, L.cascade, 0.25, 0.35);
+  if (pa > 0.01) {
+    ctx.save(); ctx.globalAlpha = pa;
+    drawHL('{杠杆}：只有十分之一是自己的钱', 110, 190, 60, 1, null, 'GOLD  ·  暴跌的推手');
+    const bx = 430, base = 930, unit = 5.4;                 // ¥1 万 = 5.4 px
+    const fall = smooth(L.fall, L.fallEnd, t);               // ¥1,000 -> ¥900
+    const own = 10 * (1 - fall), hOwn = own * unit, hB = 90 * unit;
+    const uO = easeOutCubic((t - L.pic) / 0.35), uB = easeOutCubic((t - L.pic2) / 0.35);
+    const dimPic = t > L.you ? 0.55 : 1;
+    ctx.save(); ctx.globalAlpha = pa * dimPic;
     if (uO > 0) {
       ctx.save(); ctx.shadowColor = 'rgba(110,80,30,0.2)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
-      ctx.fillStyle = goldFill(base - hOwn * uO, base); rrect(bx - 120, base - hOwn * uO, 240, Math.max(1, hOwn * uO), 6); ctx.fill(); ctx.restore();
-      if (own > 0.4) { text('本金', bx - 150, base - hOwn / 2 + 4, F.cnB(30), rgba(SOFT, 1), 'right'); text('¥' + own.toFixed(own < 10 ? 1 : 0) + ' 万', bx - 150, base - hOwn / 2 + 40, F.num(38), rgba(GOLD_D, 1), 'right'); }
+      ctx.fillStyle = goldFill(base - Math.max(hOwn, 2) * uO, base); rrect(bx - 120, base - Math.max(hOwn, 2) * uO, 240, Math.max(2, hOwn * uO), 6); ctx.fill(); ctx.restore();
+      const yl = base - Math.max(hOwn, 30) / 2;
+      text('自己的钱', bx - 150, yl - 14, F.cnB(30), rgba(GOLD_D, 1), 'right');
+      text('¥' + own.toFixed(own < 10 ? 1 : 0) + ' 万 · 1/10', bx - 150, yl + 26, F.num(34), rgba(GOLD_D, 1), 'right');
     }
     if (uB > 0) {
       const top = base - hOwn - hB * uB;
@@ -65,127 +82,129 @@ function drawLeverage(t) {
       ctx.strokeStyle = 'rgba(120,108,90,0.35)'; ctx.lineWidth = 2;
       for (let k = -30; k < 40; k++) { ctx.beginPath(); ctx.moveTo(bx - 120 + k * 18, top); ctx.lineTo(bx - 120 + k * 18 + 600, top + 600); ctx.stroke(); }
       ctx.restore();
-      text('借来的钱', bx - 150, top + hB * uB / 2, F.cnB(30), rgba(SOFT, 1), 'right');
-      text('¥90 万', bx - 150, top + hB * uB / 2 + 40, F.num(38), rgba(INK, 0.8), 'right');
+      text('借来的钱', bx - 150, top + hB * uB / 2 - 10, F.cnB(30), rgba(SOFT, 1), 'right');
+      text('¥90 万 · 9/10', bx - 150, top + hB * uB / 2 + 30, F.num(34), rgba(INK, 0.8), 'right');
     }
-    // the gold you hold
-    const u3 = (t - (L.example + 2 * P)) / 0.3;
+    const u3 = (t - L.pic3) / 0.3;
     if (u3 > 0) {
-      ctx.save(); ctx.globalAlpha = exA * clamp(u3 * 2, 0, 1);
-      const top = base - total * unit;
+      ctx.save(); ctx.globalAlpha = pa * dimPic * clamp(u3 * 2, 0, 1);
+      const top = base - (own + 90) * unit;
       ctx.strokeStyle = rgba(GOLD, 0.9); ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(bx + 150, top); ctx.lineTo(bx + 170, top); ctx.lineTo(bx + 170, base); ctx.lineTo(bx + 150, base); ctx.stroke();
       text('买入黄金', bx + 200, (top + base) / 2 - 18, F.cnB(32), rgba(SOFT, 1));
-      goldText('¥' + total.toFixed(0) + ' 万', bx + 200, (top + base) / 2 + 42, F.num(64), 64);
+      goldText('¥' + (own + 90).toFixed(0) + ' 万', bx + 200, (top + base) / 2 + 42, F.num(64), 64);
+      text('（10 倍杠杆）', bx + 200, (top + base) / 2 + 92, F.cnB(28), rgba(SOFT, 1));
       ctx.restore();
     }
-    // right: price −10% and what it does to you
-    const rx = 1180;
-    if (t > L.fall - 0.1) {
-      const a2 = smooth(L.fall - 0.1, L.fall + 0.2, t);
-      ctx.save(); ctx.globalAlpha = exA * a2;
-      text('金价只跌了', rx, 420, F.cnB(40), rgba(SOFT, 1));
-      text('−' + (10 * fall).toFixed(1) + '%', rx, 540, F.numI(120), rgba(JADE, 1));
-      text('亏损 ¥' + (10 * fall).toFixed(1) + ' 万', rx, 620, F.cnB(44), rgba(INK, 1));
-      if (fall > 0.98) text('= 你的本金全部亏光', rx, 690, F.cn(50), rgba(OX, 1));
-      ctx.restore();
-    }
-    stamp('爆仓', rx + 300, 880, L.boom, t, 120, OX, -0.14);
-    const u4 = (t - (L.boom + P)) / 0.3;
-    if (u4 > 0) { ctx.save(); ctx.globalAlpha = exA * clamp(u4 * 2, 0, 1); text('券商强制卖掉你的黄金', rx, 960, F.cnB(40), rgba(OX, 1)); ctx.restore(); }
     ctx.restore();
-  }
-  // C. the cascade: each forced sale knocks the price into the next layer of margin calls
-  const caA = fadeIO(t, L.cascade, L.loop + 0.1, 0.25, 0.4);
-  if (caA > 0.01) {
-    ctx.save(); ctx.globalAlpha = caA;
-    drawHL('一个人爆仓，{一群人}跟着爆', 110, 190, 64, 1, null, 'GOLD  ·  踩踏式下跌');
-    const X0 = 300, X1 = 1480, Y0 = 300, Y1 = 900, pv = p => lerp(Y0, Y1, (100 - p) / 45);
-    const layers = [[95, '20 倍杠杆'], [90, '10 倍杠杆'], [80, '5 倍杠杆'], [67, '3 倍杠杆']];
-    // trigger beats: the gaps shrink as the fall accelerates
-    const tr = [L.cascade + 2 * P, L.cascade + 3.5 * P, L.cascade + 4.5 * P, L.cascade + 5.25 * P];
-    const tEnd = L.cascade + 6 * P;
-    // price path keyed on the triggers
-    const keys = [[L.cascade, 100], [tr[0], 95], [tr[1], 90], [tr[2], 80], [tr[3], 67], [tEnd, 56]];
-    const priceAtT = tt => { if (tt <= keys[0][0]) return 100; for (let k = 0; k < keys.length - 1; k++) if (tt < keys[k + 1][0]) return lerp(keys[k][1], keys[k + 1][1], easeInOut((tt - keys[k][0]) / (keys[k + 1][0] - keys[k][0]))); return 56; };
-    const xAt = tt => lerp(X0, X1, clamp((tt - L.cascade) / (tEnd - L.cascade + 0.3), 0, 1));
-    layers.forEach(([lv, name], k) => {
-      const y = pv(lv), hit = t >= tr[k], fl = hit ? bump(t, tr[k], 0.02, 0.1, 0.7) : 0;
-      ctx.setLineDash([10, 10]); ctx.strokeStyle = hit ? rgba(OX, 0.55 + 0.45 * fl) : 'rgba(150,118,60,0.45)'; ctx.lineWidth = hit ? 2.5 + 3 * fl : 1.6;
-      ctx.beginPath(); ctx.moveTo(X0, y); ctx.lineTo(X1 + 40, y); ctx.stroke(); ctx.setLineDash([]);
-      text(name + ' · 跌 ' + (100 - lv) + '% 爆仓', X1 + 60, y + 10, F.cnB(28), rgba(hit ? OX : SOFT, 1));
-      if (hit) {
-        const age = t - tr[k], x = xAt(tr[k]);
-        ringAt({ x, y }, age / 0.7, OX, 160, 1, 4);
-        const u = easeOutBack(age / 0.25, 2.2);
-        if (age < 1.6) {
-          ctx.save(); ctx.globalAlpha = caA * (1 - smooth(1.1, 1.6, age)); ctx.translate(x - 20, y - 40 - 30 * easeOutCubic(age / 1.6)); ctx.scale(u, u);
-          halo('强平！', 0, 0, F.cn(44), 'right', 14); text('强平！', 0, 0, F.cn(44), rgba(OX, 1), 'right');
-          ctx.restore();
-          // sell arrow pushing the price down
-          const ay = y + 30, al = 90 * easeOutCubic(age / 0.4);
-          ctx.save(); ctx.globalAlpha = caA * (1 - smooth(0.8, 1.4, age)); ctx.strokeStyle = rgba(OX, 0.9); ctx.fillStyle = rgba(OX, 0.9); ctx.lineWidth = 6;
-          ctx.beginPath(); ctx.moveTo(x + 30, ay); ctx.lineTo(x + 30, ay + al); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(x + 14, ay + al - 4); ctx.lineTo(x + 46, ay + al - 4); ctx.lineTo(x + 30, ay + al + 18); ctx.closePath(); ctx.fill();
-          text('被迫卖出', x + 56, ay + al * 0.6, F.cnB(26), rgba(OX, 1));
-          ctx.restore();
+    // right column, step by step
+    const rx = 1060;
+    // caption: only a tenth is yours
+    {
+      const a2 = fadeIO(t, L.cap, L.you, 0.3, 0.3);
+      if (a2 > 0.01) {
+        ctx.save(); ctx.globalAlpha = pa * a2;
+        popText(() => { text('你只出了 1 成，', rx, 420, F.cn(64), rgba(INK, 1)); text('另外 9 成，', rx, 520, F.cn(64), rgba(INK, 1));
+          const w = width('都是', F.cn(64)); text('都是', rx, 620, F.cn(64), rgba(INK, 1)); goldText('借来的', rx + w, 620, F.cn(64), 64); }, t, L.cap, rx + 300, 520, 1.2);
+        // the price drop
+        if (t > L.fall - 0.1) {
+          const a3 = smooth(L.fall - 0.1, L.fall + 0.2, t);
+          ctx.globalAlpha = pa * a2 * a3;
+          const price = lerp(1000, 900, easeInOut(fall));
+          text('金价', rx, 740, F.cnB(34), rgba(SOFT, 1));
+          text('¥' + fmt(price) + ' /克', rx + 90, 750, F.num(84), rgba(fall > 0.02 ? JADE : INK, 1));
+          if (fall > 0.02) text('−' + (10 * fall).toFixed(0) + '%', rx + 480, 750, F.numI(84), rgba(JADE, 1));
+          if (t > L.fallEnd) { const a4 = smooth(L.fallEnd, L.fallEnd + 0.3, t); ctx.globalAlpha = pa * a2 * a4;
+            text('亏掉的 10 万，正好是你全部的本金', rx, 840, F.cnB(40), rgba(OX, 1)); }
         }
+        ctx.restore();
       }
-    });
-    // the price line itself
-    const tNow = Math.min(t, tEnd + 0.2);
-    ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    for (const [w, col] of [[18, 'rgba(240,178,50,0.12)'], [7, rgba(JADE, 0.95)], [2, 'rgba(230,255,240,0.9)']]) {
-      ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath();
-      for (let tt = L.cascade; tt <= tNow; tt += 1 / 120) { const x = xAt(tt), y = pv(priceAtT(tt)) + 4 * Math.sin(tt * 37) * (1 - smooth(tr[0], tr[1], tt)); if (tt === L.cascade) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-      ctx.stroke();
     }
-    const hx = xAt(tNow), hy = pv(priceAtT(tNow));
-    ctx.fillStyle = '#FFFDF4'; ctx.beginPath(); ctx.arc(hx, hy, 9, 0, 7); ctx.fill(); ctx.strokeStyle = rgba(JADE, 1); ctx.lineWidth = 3; ctx.stroke();
-    ctx.restore();
-    text('金价', X0 - 30, Y0 + 10, F.cnB(28), rgba(SOFT, 1), 'right');
+    // you: give me time
+    {
+      const a2 = fadeIO(t, L.you, L.force, 0.25, 0.3);
+      if (a2 > 0.01) {
+        ctx.save(); ctx.globalAlpha = pa * a2;
+        const u = easeOutBack((t - L.you) / 0.35, 1.6);
+        ctx.translate(820, 420); ctx.scale(u, u); ctx.translate(-820, -420);
+        avatar(760, 330, '你', GOLD_D);
+        bubble(860, 250, 860, 180, 816, 320, GOLD);
+        text('我相信它会涨回来，', 900, 318, F.cn(50), rgba(INK, 1));
+        text('再给我一点时间！', 900, 390, F.cn(50), rgba(INK, 1));
+        ctx.restore();
+      }
+    }
+    // the lender: it's my money
+    {
+      const a2 = fadeIO(t, L.broker, L.force + 0.4, 0.25, 0.3);
+      if (a2 > 0.01) {
+        ctx.save(); ctx.globalAlpha = pa * a2;
+        const u = easeOutBack((t - L.broker) / 0.35, 1.6);
+        ctx.translate(1330, 720); ctx.scale(u, u); ctx.translate(-1330, -720);
+        avatar(1770, 800, '券商', OX);
+        bubble(960, 570, 740, 250, 1714, 800, OX);
+        text('可那 90 万是我的钱。', 1000, 645, F.cn(50), rgba(INK, 1));
+        text('万一继续跌呢？', 1000, 717, F.cn(50), rgba(INK, 1));
+        text('这个风险我不陪你担。', 1000, 789, F.cn(50), rgba(OX, 1));
+        ctx.restore();
+      }
+    }
+    // forced sale
+    if (t > L.force) {
+      stamp('强制平仓', 1240, 520, L.force, t, 110, OX, -0.12);
+      const u = (t - (L.force + P)) / 0.3;
+      if (u > 0) { ctx.save(); ctx.globalAlpha = pa * clamp(u * 2, 0, 1); text('不等你，直接把你的黄金卖掉', 1240, 680, F.cn(48), rgba(OX, 1), 'center'); ctx.restore(); }
+    }
     ctx.restore();
   }
-  // D. the loop
-  const loA = fadeIO(t, L.loop, L.t1, 0.3, 0.3);
-  if (loA > 0.01) {
-    ctx.save(); ctx.globalAlpha = loA;
-    drawHL('这就是{踩踏}', 110, 190, 64, 1, null, 'GOLD  ·  死亡螺旋');
-    const cx = 760, cy = 600, R = 250, nodes = ['价格下跌', '保证金不够', '强制卖出', '价格再跌'];
-    const spin = (t - L.loop) * 1.3;
-    ctx.strokeStyle = 'rgba(190,150,70,0.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
-    // a gold comet running round the loop
-    for (let k = 0; k < 24; k++) {
-      const ang = -Math.PI / 2 + spin * 2 - k * 0.05;
-      ctx.fillStyle = rgba(GOLD_HALO, 0.6 * (1 - k / 24)); ctx.beginPath(); ctx.arc(cx + Math.cos(ang) * R, cy + Math.sin(ang) * R, 9 * (1 - k / 30), 0, 7); ctx.fill();
-    }
-    nodes.forEach((s, k) => {
-      const ang = -Math.PI / 2 + k * Math.PI / 2, x = cx + Math.cos(ang) * R, y = cy + Math.sin(ang) * R;
-      const u = (t - (L.loop + k * P)) / 0.3; if (u <= 0) return;
-      ctx.save(); ctx.globalAlpha = loA * clamp(u * 2, 0, 1); ctx.translate(x, y); const sc = easeOutBack(u, 2); ctx.scale(sc, sc);
-      const w = width(s, F.cn(40)) + 56;
-      ctx.shadowColor = 'rgba(110,80,30,0.22)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 8;
-      rrect(-w / 2, -40, w, 80, 40); ctx.fillStyle = 'rgba(255,253,248,0.97)'; ctx.fill(); ctx.shadowColor = 'transparent';
-      ctx.strokeStyle = rgba(k % 2 ? OX : JADE, 0.8); ctx.lineWidth = 2.5; ctx.stroke();
-      text(s, 0, 14, F.cn(40), rgba(k % 2 ? OX : JADE_D, 1), 'center');
+  // F. the stampede: one forced sale feeds the next
+  const ca = fadeIO(t, L.cascade - 0.05, L.final, 0.3, 0.3);
+  if (ca > 0.01) {
+    ctx.save(); ctx.globalAlpha = ca;
+    drawHL('一个人被强平，会发生什么？', 110, 190, 60, 1, null, 'GOLD  ·  踩踏式下跌');
+    const steps = ['卖的人太多', '金价继续下跌', '更多人被强平', '又被迫卖出'];
+    const prices = ['¥900', '¥850', '¥780', '¥700'];
+    const cx0 = 260, cy = 560, gap = 380;
+    steps.forEach((s, k) => {
+      const t0 = L.cascade + k * 2 * P, u = (t - t0) / 0.35; if (u <= 0) return;
+      const x = cx0 + k * gap;
+      ctx.save(); ctx.globalAlpha = ca * clamp(u * 2, 0, 1);
+      const sc = easeOutBack(u, 1.8); ctx.translate(x + 150, cy); ctx.scale(sc, sc);
+      ctx.shadowColor = 'rgba(110,80,30,0.22)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
+      rrect(-150, -70, 300, 140, 22); ctx.fillStyle = 'rgba(255,253,248,0.97)'; ctx.fill(); ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = rgba(k % 2 ? JADE : OX, 0.85); ctx.lineWidth = 3; ctx.stroke();
+      text(s, 0, 16, F.cn(44), rgba(k % 2 ? JADE_D : OX, 1), 'center');
       ctx.restore();
-      // arrow to the next node
-      const a2 = ang + Math.PI / 4, ax = cx + Math.cos(a2) * R, ay = cy + Math.sin(a2) * R;
-      ctx.save(); ctx.globalAlpha = loA * clamp(u * 2, 0, 1); ctx.translate(ax, ay); ctx.rotate(a2 + Math.PI / 2);
-      ctx.fillStyle = rgba(GOLD, 0.9); ctx.beginPath(); ctx.moveTo(-12, -10); ctx.lineTo(14, 0); ctx.lineTo(-12, 10); ctx.closePath(); ctx.fill(); ctx.restore();
+      if (k < 3) {                                     // arrow to the next box
+        const ua = (t - (t0 + P)) / 0.3;
+        if (ua > 0) { ctx.save(); ctx.globalAlpha = ca * clamp(ua * 2, 0, 1); const ax = x + 310, ay = cy;
+          ctx.fillStyle = rgba(GOLD, 0.95); ctx.beginPath(); ctx.moveTo(ax, ay - 16); ctx.lineTo(ax + 40, ay); ctx.lineTo(ax, ay + 16); ctx.closePath(); ctx.fill(); ctx.restore(); }
+      }
+      // the price under each step keeps dropping
+      ctx.save(); ctx.globalAlpha = ca * clamp(u * 2, 0, 1);
+      text(prices[k], x + 150, cy + 150, F.num(64), rgba(k ? JADE : INK, 1), 'center');
+      ctx.restore();
     });
-    const u5 = (t - (L.loop + 4 * P)) / 0.4;
-    if (u5 > 0) {
-      ctx.save(); ctx.globalAlpha = loA * clamp(u5 * 2, 0, 1);
-      const x = 1180;
-      text('这一轮也是这样：', x, 470, F.cnB(40), rgba(SOFT, 1));
-      ['股市大跌，账户亏损', '券商追加保证金', '卖黄金换现金', '金价越跌越快'].forEach((s, k) => {
-        const uu = (t - (L.loop + (4 + k * 0.5) * P)) / 0.3; if (uu <= 0) return;
-        ctx.save(); ctx.globalAlpha = loA * clamp(uu * 2, 0, 1);
-        text((k ? '→ ' : '') + s, x, 550 + k * 70, F.cn(46), rgba(k === 3 ? JADE_D : INK, 1)); ctx.restore();
-      });
+    // loop back: and round it goes
+    const ul = (t - (L.cascade + 8 * P)) / 0.4;
+    if (ul > 0) {
+      ctx.save(); ctx.globalAlpha = ca * clamp(ul * 2, 0, 1);
+      const xa = cx0 + 3 * gap + 150, xb = cx0 + 150, yb = cy - 110, g = easeOutCubic(ul);
+      ctx.strokeStyle = rgba(GOLD, 0.9); ctx.lineWidth = 4; ctx.setLineDash([12, 10]);
+      ctx.beginPath(); ctx.moveTo(xa, cy - 75); ctx.bezierCurveTo(xa, yb - 120, lerp(xa, xb, 0.5), yb - 140, lerp(xa, xb, g), yb - 120 + 120 * (g > 0.98 ? 1 : 0)); ctx.stroke(); ctx.setLineDash([]);
+      text('越卖越跌，越跌越卖', (xa + xb) / 2, yb - 150, F.cn(50), rgba(OX, 1), 'center', 4);
       ctx.restore();
     }
+    ctx.restore();
+  }
+  // G. 这就是踩踏式下跌
+  const fa = fadeIO(t, L.final - 0.05, L.t1 + 0.05, 0.25, 0.2);
+  if (fa > 0.01) {
+    ctx.save(); ctx.globalAlpha = fa;
+    popText(() => { const f = F.cn(140), w1 = width('这就是', f), w2 = width('踩踏式下跌', f), x = W / 2 - (w1 + w2) / 2;
+      shadowText('这就是', x, 560, f, rgba(INK, 1), 'left', 0, 0.14); goldText('踩踏式下跌', x + w1, 560, f, 140); }, t, L.final, W / 2, 520, 1.6);
+    const u = (t - (L.final + 2 * P)) / 0.4;
+    if (u > 0) { ctx.globalAlpha = fa * clamp(u * 2, 0, 1); text('这一轮也一样：股市大跌 → 补保证金 → 卖黄金换现金', W / 2, 680, F.cnB(40), rgba(SOFT, 1), 'center', 2); }
     ctx.restore();
   }
 }
@@ -265,7 +284,7 @@ function drawOutro(t) {
   const a = smooth(O.t0, O.t0 + 0.35, t);
   ctx.save(); ctx.globalAlpha = a;
   popText(() => { const f = F.cn(110), w1 = width('所以，现在', f), w2 = width('能买吗', f), w3 = width('？', f), x = W / 2 - (w1 + w2 + w3) / 2;
-    shadowText('所以，现在', x, 230, f, rgba(INK, 1), 'left', 0, 0.12); goldText('能买吗', x + w1, 230, f, 110); goldText('？', x + w1 + w2, 230, f, 110); }, t, O.q, W / 2, 200);
+    shadowText('所以，现在', x, 290, f, rgba(INK, 1), 'left', 0, 0.12); goldText('能买吗', x + w1, 290, f, 110); goldText('？', x + w1 + w2, 290, f, 110); }, t, O.q, W / 2, 260);
   const items = [
     [O.p1, '1', '暴跌之后回本：', '快的 1.5 年，慢的 28 年'],
     [O.p2, '2', '别加杠杆：', '它是踩踏的放大器'],
@@ -273,7 +292,7 @@ function drawOutro(t) {
   ];
   items.forEach(([t0, n, h, body], k) => {
     const u = (t - t0) / 0.35; if (u <= 0) return;
-    const y = 370 + k * 140, x = 400;
+    const y = 480 + k * 160, x = 400;
     ctx.save(); ctx.globalAlpha = a * clamp(u * 2, 0, 1); ctx.translate(60 * (1 - easeOutCubic(u)), 0);
     ctx.shadowColor = 'rgba(110,80,30,0.18)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
     rrect(x, y - 70, 1120, 116, 16); ctx.fillStyle = 'rgba(255,253,248,0.95)'; ctx.fill(); ctx.shadowColor = 'transparent';
@@ -283,24 +302,26 @@ function drawOutro(t) {
     text(body, x + 140 + w1, y + 12, F.cnB(44), rgba(k === 1 ? OX : SOFT, 1));
     ctx.restore();
   });
-  const uc = (t - O.cta) / 0.4;
-  if (uc > 0) {
-    // the closing line: don't ask whether you can buy, ask whether you can hold
-    ctx.save(); ctx.globalAlpha = a * clamp(uc * 2, 0, 1);
-    const y = 862, f1 = F.cn(58), f2 = F.cn(70);
-    popText(() => shadowText('不要问能不能买，', W / 2, y, f1, rgba(SOFT, 1), 'center', 4, 0.1), t, O.cta, W / 2, y - 20, 1.3);
-    popText(() => { const s1 = '先问问自己：能不能', s2 = '拿得住', w1 = width(s1, f2, 2), w2 = width(s2, f2, 2), x = W / 2 - (w1 + w2) / 2;
-      shadowText(s1, x, y + 92, f2, rgba(INK, 1), 'left', 2, 0.14); goldText(s2, x + w1, y + 92, f2, 70, 'left', 2);
-      goldRule(x + w1 - 10, x + w1 + w2 + 10, y + 112, 1); }, t, O.cta + HK.beat, W / 2, y + 70, 1.5);
-    const uf = (t - (O.cta + 3 * HK.beat)) / 0.5;
-    if (uf > 0) { ctx.globalAlpha = a * clamp(uf, 0, 1); text('评论区聊聊 · 历史不代表未来，本视频不构成投资建议', W / 2, y + 150, F.cnB(26), rgba(FAINT, 1), 'center', 3); }
-    ctx.restore();
-  }
+  ctx.restore();
+}
+function drawFinalCard(t) {
+  const O = OUT, P = HK.beat;
+  const a = smooth(O.final - 0.05, O.final + 0.25, t);
+  if (a < 0.01) return;
+  ctx.save(); ctx.globalAlpha = a;
+  popText(() => shadowText('不要问能不能买，', W / 2, 400, F.cn(76), rgba(SOFT, 1), 'center', 6, 0.1), t, O.final, W / 2, 370, 1.3);
+  popText(() => shadowText('要问问自己：', W / 2, 540, F.cn(86), rgba(INK, 1), 'center', 6, 0.12), t, O.final + 2 * P, W / 2, 510, 1.4);
+  popText(() => { const f = F.cn(124), s1 = '下跌的时候，能不能', s2 = '拿得住', s3 = '？', w1 = width(s1, f), w2 = width(s2, f), w3 = width(s3, f), x = W / 2 - (w1 + w2 + w3) / 2;
+    shadowText(s1, x, 720, f, rgba(INK, 1), 'left', 0, 0.14); goldText(s2, x + w1, 720, f, 124); goldText(s3, x + w1 + w2, 720, f, 124);
+    goldRule(x + w1 - 10, x + w1 + w2 + 10, 752, 1); }, t, O.final + 4 * P, W / 2, 680, 1.5);
+  const uf = (t - (O.final + 7 * P)) / 0.5;
+  if (uf > 0) { ctx.globalAlpha = a * clamp(uf, 0, 1); text('评论区聊聊 · 历史不代表未来，本视频不构成投资建议', W / 2, 900, F.cnB(28), rgba(FAINT, 1), 'center', 3); }
   ctx.restore();
 }
 function draw2D(t) {
   bg2D(t);
   if (t < INF.t0) drawLeverage(t);
   else if (t < OUT.t0) drawInflation(t);
-  else drawOutro(t);
+  else if (t < OUT.final) drawOutro(t);
+  else drawFinalCard(t);
 }

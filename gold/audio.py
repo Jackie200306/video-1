@@ -209,25 +209,24 @@ if TL.get('full'):
     for k in range(6):
         add(tick(1900 - 80 * k, 0.04), HS['table'] + 0.15 + k * P / 2, -22, pan=(k - 2.5) * 0.15)
     add(pop(), HS['table'] + 0.15 + 3.5 * P, -17)
-    # leverage
+    # leverage, one idea at a time
     add(whoosh(0.5, 300, 3000), LV['t0'] - 0.2, -20, send=0.2); add(thump(64, 0.5), LV['t0'], -13)
-    add(pop(), LV['t0'] + 2 * P, -16); add(bell(1318.5, 2.0, 0.7), LV['t0'] + 2 * P + 0.01, -19, send=0.4)
-    add(whoosh(0.4, 400, 3000), LV['example'] - 0.2, -22, pan=-0.3)
-    add(thump(90, 0.4), LV['example'], -15); add(thump(70, 0.5), LV['example'] + P, -14); add(pop(), LV['example'] + 2 * P, -16)
-    add(fall_whistle(2.2 * P), LV['fall'], -20, pan=0.2)
-    add(impact(0.9), LV['boom'], -10, send=0.4); add(thump(50, 0.7), LV['boom'] + 0.01, -12)
-    add(tick(800, 0.08), LV['boom'] + P, -22)
-    tr4 = [LV['cascade'] + 2 * P, LV['cascade'] + 3.5 * P, LV['cascade'] + 4.5 * P, LV['cascade'] + 5.25 * P]
+    add(pop(), LV['kw'], -16); add(bell(1318.5, 2.0, 0.7), LV['kw'] + 0.01, -19, send=0.4)
+    add(whoosh(0.4, 400, 3000), LV['pic'] - 0.2, -22, pan=-0.3)
+    add(thump(90, 0.4), LV['pic'], -15); add(thump(70, 0.5), LV['pic2'], -14); add(pop(), LV['pic3'], -16)
+    add(pop(), LV['cap'], -17, pan=0.3)
+    add(fall_whistle(LV['fallEnd'] - LV['fall']), LV['fall'], -20, pan=0.2); add(thump(55, 0.6), LV['fallEnd'], -13)
+    add(whoosh(0.3, 600, 4000), LV['you'] - 0.15, -23, pan=-0.3); add(pop(), LV['you'], -16, pan=-0.3)
+    add(whoosh(0.3, 600, 4000), LV['broker'] - 0.15, -23, pan=0.3); add(pop(), LV['broker'], -16, pan=0.3); add(thump(62, 0.45), LV['broker'] + 2 * P, -16)
+    add(impact(0.9), LV['force'], -10, send=0.4); add(thump(50, 0.7), LV['force'] + 0.01, -12); add(tick(800, 0.08), LV['force'] + P, -22)
     add(whoosh(0.4, 400, 3000), LV['cascade'] - 0.2, -22, pan=-0.3)
-    for k, t0 in enumerate(tr4):
-        add(impact(0.55 + 0.1 * k), t0, -15 + k, send=0.35); add(thump(85 - 8 * k, 0.4), t0, -14)
-        add(glass_shatter(0.35 + 0.1 * k), t0, -20 + k, pan=0.3 - 0.2 * k)
-    add(fall_whistle(tr4[3] - tr4[0] + P), tr4[0], -21, pan=0.1)
-    add(whoosh(0.5, 300, 3000), LV['loop'] - 0.2, -21)
     for k in range(4):
-        add(pop(), LV['loop'] + k * P, -17, pan=[0, 0.4, 0, -0.4][k])
-    for k in range(4):
-        add(tick(1300, 0.05), LV['loop'] + (4 + k * 0.5) * P, -23, pan=0.3)
+        t0 = LV['cascade'] + k * 2 * P
+        add(impact(0.5 + 0.1 * k), t0, -16 + k, send=0.35); add(thump(85 - 8 * k, 0.4), t0, -15)
+        add(glass_shatter(0.3 + 0.1 * k), t0 + 0.01, -22 + k, pan=0.3 - 0.2 * k)
+    add(fall_whistle(6 * P), LV['cascade'] + P, -22, pan=0.1)
+    add(whoosh(0.8, 300, 2500), LV['cascade'] + 8 * P - 0.1, -21, send=0.2)
+    add(thump(60, 0.6), LV['final'], -11); add(impact(0.6), LV['final'], -15, send=0.4); add(pop(), LV['final'] + 2 * P, -18)
     # inflation
     add(whoosh(0.5, 300, 3000), INF['t0'] - 0.2, -20, send=0.2); add(thump(64, 0.5), INF['t0'], -14)
     add(riser(INF['labels'] - INF['chart'], False), INF['chart'], -25, send=0.2)
@@ -239,9 +238,11 @@ if TL.get('full'):
     for k, key in enumerate(('p1', 'p2', 'p3')):
         add(whoosh(0.3, 600, 4000), OUT[key] - 0.2, -25, pan=-0.4); add(pop(), OUT[key], -17, pan=-0.2)
         add(bell([1046.5, 1318.5, 1568.0][k], 1.8, 0.6), OUT[key] + 0.02, -21, send=0.35)
-    add(pop(), OUT['cta'], -17)
-    add(thump(64, 0.5), OUT['cta'] + P, -13); add(bell(880, 3.5, 0.8), OUT['cta'] + P, -14, send=0.5)
-    add(shimmer(1.6, 60), OUT['cta'] + P, -18, pan=0.2, send=0.3)
+    # the closing card, line by line
+    add(whoosh(0.6, 2500, 300), OUT['final'] - 0.3, -22, send=0.2)
+    add(pop(), OUT['final'], -17); add(pop(), OUT['final'] + 2 * P, -16)
+    add(thump(64, 0.5), OUT['final'] + 4 * P, -12); add(bell(880, 3.5, 0.8), OUT['final'] + 4 * P, -14, send=0.5)
+    add(shimmer(1.6, 60), OUT['final'] + 4 * P, -18, pan=0.2, send=0.3)
     # section cuts: a soft whoosh into each
     for tc in (LV['t0'], INF['t0'], OUT['t0']):
         add(whoosh(0.6, 2500, 300), tc - 0.3, -22, send=0.2)
@@ -262,7 +263,21 @@ if song_path:
     song = np.frombuffer(raw, '<f4').reshape(-1, 2).astype(np.float64)
     s0 = TL['bgm']['song_start']
     i_s = int(round(s0 * SR))
-    bgm = song[i_s:i_s + n].copy()
+    if TL.get('music'):
+        # spliced song: segments of the song laid end to end, 25 ms equal-gain crossfades on the bar lines
+        bgm = np.zeros((n, 2)); xf = int(0.025 * SR)
+        for k, sg in enumerate(TL['music']):
+            v0, a0, ln = int(round(sg['v0'] * SR)), int(round(sg['s0'] * SR)), int(round(sg['dur'] * SR))
+            pre = xf if k else 0
+            seg = song[max(0, a0 - pre):a0 + ln + xf].copy()
+            w = np.ones(len(seg))
+            if pre: w[:pre] = np.linspace(0, 1, pre)
+            if k < len(TL['music']) - 1: w[-xf:] = np.linspace(1, 0, xf)
+            st = v0 - pre
+            e = min(n, st + len(seg))
+            bgm[max(0, st):e] += (seg * w[:, None])[max(0, -st):e - st]
+    else:
+        bgm = song[i_s:i_s + n].copy()
     if len(bgm) < n:
         bgm = np.concatenate([bgm, np.zeros((n - len(bgm), 2))])
     # intro: the music opens up from a muffled low-pass over the first three beats

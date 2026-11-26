@@ -133,31 +133,39 @@ def VB(bar, beat=0.0):                            # video time of song bar `bar`
 
 EXTRA = {}
 if FULL:
-    T = SONG_LEN - SONG_START                     # to the end of the song
+    # music edit in song bars: [4,24) + [32,77) + [73,77) + [77,end). Splices sit on bar lines where the
+    # song repeats itself (waveform correlation 0.93 at 24->32, 0.94 at 77->73).
+    EDIT = [(4, 24), (32, 77), (73, 77), (77, None)]
+    sbt = lambda b: SONG_BAR0 + b * BAR
+    segs, vt = [], 0.0
+    for a, b in EDIT:
+        s0_ = SONG_START if a == 4 else sbt(a)
+        s1_ = SONG_LEN if b is None else sbt(b)
+        segs.append(dict(v0=round(vt, 6), s0=round(s0_, 6), dur=round(s1_ - s0_, 6)))
+        vt += s1_ - s0_
+    T = vt
     # ---- 2023 -> 2026 timeline: (date, bar, kind, title, sub). The head reaches each date on its bar.
     EV = [
-        ('2023-02-01', 13, 'info', '美联储继续加息', '利率升至 4.5%–4.75%，金价承压'),
-        ('2023-03-10', 14, 'shock', '硅谷银行倒闭', '银行业危机，资金涌入黄金避险'),
-        ('2023-07-26', 15.5, 'info', '美联储最后一次加息', '利率 5.25%–5.5%，22 年来最高'),
-        ('2023-10-07', 16.5, 'shock', '巴以冲突爆发', '避险情绪升温，一个月涨约 10%'),
-        ('2024-03-04', 18, 'milestone', '突破历史高点', '各国央行持续买金，主升浪开启'),
-        ('2024-04-12', 19, 'shock', '中东局势升级', '伊朗、以色列互相袭击，金价冲上 $2,400'),
-        ('2024-09-18', 20.5, 'info', '美联储首次降息', '一次降 50 个基点，降息周期开启'),
-        ('2024-11-06', 21.5, 'dip', '特朗普胜选', '美元走强，金价回调约 8%'),
-        ('2025-03-14', 23, 'milestone', '首次突破 $3,000', '关税阴云下，避险资金涌入'),
-        ('2025-04-02', 24, 'shock', '“解放日”关税', '全球市场恐慌，三周后冲上 $3,500'),
-        ('2025-09-17', 26, 'info', '美联储重启降息', '金价突破 $3,700'),
-        ('2025-10-08', 27, 'milestone', '首次突破 $4,000', '涨势越来越陡'),
-        ('2025-10-21', 27.5, 'crash', '单日暴跌 6%', '12 年来最大单日跌幅，随后又涨了回来'),
-        ('2026-01-26', 29.5, 'milestone', '首次突破 $5,000', '市场担忧美联储独立性，资金疯狂涌入'),
-        ('2026-01-29', 30, 'peak', '历史最高', '1 月一个月就涨了近 30%'),
-        ('2026-01-30', 30.5, 'crash', '特朗普提名沃什任美联储主席', '市场押注更鹰派，单日暴跌约 9%'),
-        ('2026-02-28', 31.5, 'shock', '美伊开战', '油价破百，美元走强，黄金不涨反跌'),
-        ('2026-05-22', 33, 'info', '沃什就任美联储主席', '通胀走高，降息希望落空'),
-        ('2026-08-24', 34, 'bounce', '短暂反弹', '通胀数据降温，8 月涨约 10%'),
-        ('2026-09-16', 35, 'crash', '美联储三年来首次加息', '利率升至 3.75%–4%'),
-        ('2026-10-30', 36, 'crash', '全球股市大跌', '投资者卖黄金补保证金'),
-        ('2026-11-25', 37, 'crash', '通胀超预期，加息预期升温', '跌破 $3,500，一年多来最低'),
+        ('2023-03-10', 13, 'shock', '硅谷银行倒闭', '银行业危机，资金涌入黄金避险'),
+        ('2023-07-26', 14, 'info', '美联储最后一次加息', '利率 5.25%–5.5%，22 年来最高'),
+        ('2023-10-07', 14.75, 'shock', '巴以冲突爆发', '避险情绪升温，一个月涨约 10%'),
+        ('2024-03-04', 16, 'milestone', '突破历史高点', '各国央行持续买金，主升浪开启'),
+        ('2024-04-12', 16.75, 'shock', '中东局势升级', '伊朗、以色列互相袭击，金价冲上 $2,400'),
+        ('2024-09-18', 17.75, 'info', '美联储首次降息', '一次降 50 个基点，降息周期开启'),
+        ('2024-11-06', 18.5, 'dip', '特朗普胜选', '美元走强，金价回调约 8%'),
+        ('2025-03-14', 19.25, 'milestone', '首次突破 $3,000', '关税阴云下，避险资金涌入'),
+        ('2025-04-02', 20, 'shock', '“解放日”关税', '全球市场恐慌，三周后冲上 $3,500'),
+        ('2025-10-08', 21, 'milestone', '首次突破 $4,000', '涨势越来越陡'),
+        ('2025-10-21', 21.5, 'crash', '单日暴跌 6%', '12 年来最大单日跌幅，随后又涨了回来'),
+        ('2026-01-26', 22.5, 'milestone', '首次突破 $5,000', '市场担忧美联储独立性，资金疯狂涌入'),
+        ('2026-01-29', 23, 'peak', '历史最高', '1 月一个月就涨了近 30%'),
+        ('2026-01-30', 23.5, 'crash', '特朗普提名沃什任美联储主席', '市场押注更鹰派，单日暴跌约 9%'),
+        ('2026-02-28', 24.25, 'shock', '美伊开战', '油价破百，美元走强，黄金不涨反跌'),
+        ('2026-05-22', 25.25, 'info', '沃什就任美联储主席', '通胀走高，降息希望落空'),
+        ('2026-08-24', 26, 'bounce', '短暂反弹', '通胀数据降温，8 月涨约 10%'),
+        ('2026-09-16', 26.75, 'crash', '美联储三年来首次加息', '利率升至 3.75%–4%'),
+        ('2026-10-30', 27.75, 'crash', '全球股市大跌', '投资者卖黄金补保证金'),
+        ('2026-11-25', 29, 'crash', '通胀超预期，加息预期升温', '跌破 $3,500，一年多来最低'),
     ]
     events = []
     for ds_, b, k, title, sub in EV:
@@ -165,13 +173,13 @@ if FULL:
         events.append(dict(date=ds_, i=i, t=VB(b), kind=k, title=title, sub=sub,
                            usd=SER[i][1], cny=round(SER[i][2], 1)))
     keys = [dict(t=VB(12), i=0)] + [dict(t=e['t'], i=e['i']) for e in events]
-    chapters = [dict(t=VB(13) - 0.3, text='2023 · {加息风暴}'), dict(t=VB(18) - 0.3, text='2024 · {央行抢金}'),
-                dict(t=VB(22.5) - 0.3, text='2025 · {一路狂飙}'), dict(t=VB(29) - 0.3, text='2026 · {疯狂的顶点}'),
-                dict(t=VB(30.5), text='{泡沫破裂}'), dict(t=VB(37), text='{现在}')]
-    EXTRA['timeline'] = dict(t0=VB(12), t1=VB(37), events=events, keys=keys, chapters=chapters)
+    chapters = [dict(t=VB(13) - 0.3, text='2023 · {加息风暴}'), dict(t=VB(16) - 0.3, text='2024 · {央行抢金}'),
+                dict(t=VB(19.25) - 0.3, text='2025 · {一路狂飙}'), dict(t=VB(22.5) - 0.3, text='2026 · {疯狂的顶点}'),
+                dict(t=VB(23.5), text='{泡沫破裂}'), dict(t=VB(29), text='{现在}')]
+    EXTRA['timeline'] = dict(t0=VB(12), t1=VB(29), events=events, keys=keys, chapters=chapters)
     # ---- now: price in both units, then the question
-    EXTRA['nowsec'] = dict(card=VB(37), overview=VB(38), convert=VB(38.5), question=VB(40), sub=VB(41.5), sub2=VB(42.5),
-                        rewind=VB(43.5), cut=VB(44), fx=round(NOW[2] * OZ / NOW[1], 4), oz=OZ)
+    EXTRA['nowsec'] = dict(card=VB(29), overview=VB(30), convert=VB(30.5), question=VB(32), sub=VB(33.5), sub2=VB(34.5),
+                        rewind=VB(35.5), cut=VB(36), fx=round(NOW[2] * OZ / NOW[1], 4), oz=OZ)
     # ---- history (USD/oz, monthly averages since 1970 plus well-known extremes and the daily feed)
     D0 = d(SER[0][0])
     mon = []
@@ -209,11 +217,11 @@ if FULL:
              title='第 6 次 · 2026（现在）', sub='这一次，要多久才能回本？'),
     ]
     # head path (bar -> date) through the crashes; the 1980 bubble bursts on the second drop (bar 48)
-    HK2 = [(44, '1971-08-15'), (44.75, '1974-12-30'), (45.25, '1976-08-25'), (45.75, '1978-07-28'),
+    HK2 = [(b - 8, dd) for b, dd in [(44, '1971-08-15'), (44.75, '1974-12-30'), (45.25, '1976-08-25'), (45.75, '1978-07-28'),
            (47.25, '1980-01-21'), (48, '1980-01-22'), (48.75, '1982-06-21'), (49.5, '1999-07-20'), (50.5, '2008-01-02'),
            (51.75, '2008-03-17'), (52.25, '2008-10-24'), (52.75, '2009-10-06'), (53.75, '2011-09-06'), (54.25, '2013-04-15'),
            (54.75, '2015-12-17'), (55.5, '2020-07-27'), (56.75, '2020-08-07'), (57.25, '2022-09-28'), (57.75, '2023-12-04'),
-           (58.75, PEAK[0]), (59.25, NOW[0])]
+           (58.75, PEAK[0]), (59.25, NOW[0])]]
     tmap = {dd: VB(b) for b, dd in HK2}
     for c in CR:
         c['peak_x'], c['low_x'] = X(c['peak'][0]), X(c['low'][0])
@@ -225,11 +233,13 @@ if FULL:
             c['rec_x'], c['t_rec'] = X(c['rec']), tmap[c['rec']]
             c['years'] = round((d(c['rec']) - d(c['peak'][0])).days / 365.25, 1)
             c['ylabel'] = {1: '3.5 年', 2: '28 年', 3: '1.5 年', 4: '9 年', 5: '3.3 年'}[c['n']]
-    EXTRA['history'] = dict(t0=VB(44), t1=VB(64), keys=[dict(t=VB(b), x=X(dd)) for b, dd in HK2], crashes=CR,
-                            intro=dict(t=VB(44), x=X('1971-08-15')), table=VB(60), breakdown=VB(47.25), drop=VB(48), bubble=VB(46.1))
+    EXTRA['history'] = dict(t0=VB(36), t1=VB(56), keys=[dict(t=VB(b), x=X(dd)) for b, dd in HK2], crashes=CR,
+                            intro=dict(t=VB(36), x=X('1971-08-15')), table=VB(52), breakdown=VB(39.25), drop=VB(40), bubble=VB(38.1))
     # ---- leverage explainer, inflation, outro (2D scenes), all on the bar grid
-    EXTRA['lev'] = dict(t0=VB(64), title=VB(64), example=VB(65), fall=VB(66), boom=VB(66.75), cascade=VB(67.5),
-                        loop=VB(70), t1=VB(72))
+    L0 = 56                                         # leverage explainer: 12 bars, one idea at a time
+    EXTRA['lev'] = dict(t0=VB(L0), title=VB(L0), kw=VB(L0, 2), pic=VB(L0 + 1), pic2=VB(L0 + 1.5), pic3=VB(L0 + 2), cap=VB(L0 + 2.5),
+                        fall=VB(L0 + 3), fallEnd=VB(L0 + 3.75), you=VB(L0 + 4.5), broker=VB(L0 + 6), force=VB(L0 + 7.5),
+                        cascade=VB(L0 + 8.5), final=VB(L0 + 11), t1=VB(L0 + 12))
     cpi = {}
     for line in open(os.path.join(HERE, 'data', 'cpi_us_monthly.csv')):
         if line.startswith('Date'):
@@ -246,12 +256,14 @@ if FULL:
     gold_m = [35.0 if k < '1971-08' else gm.get(k) for k in months]
     last_g = NOW[1]
     gold_m = [g if g else last_g for g in gold_m]
-    EXTRA['infl'] = dict(t0=VB(72), title=VB(72), chart=VB(72.5), labels=VB(75), real=VB(75.5), t1=VB(78),
+    EXTRA['infl'] = dict(t0=VB(68), title=VB(68), chart=VB(68.5), labels=VB(71), real=VB(71.5), t1=VB(74),
                          months=months, cpi=[cpi[k] for k in months], gold=gold_m, gold_now=NOW[1],
                          cpi_1980=cpi['1980-01'], cpi_now=cpi[months[-1]])
-    EXTRA['outro'] = dict(t0=VB(78), q=VB(78), p1=VB(79), p2=VB(80), p3=VB(81), cta=VB(82.5), fade=T - 2.6)
-    print('full: T=%.2f s; timeline %.2f-%.2f, now->hist cut %.2f, lev %.2f, infl %.2f, outro %.2f' %
-          (T, VB(12), VB(37), VB(44), VB(64), VB(72), VB(78)))
+    EXTRA['outro'] = dict(t0=VB(74), q=VB(74), p1=VB(75), p2=VB(76), p3=VB(77), final=VB(78.5), cta=VB(78.5), fade=T - 2.4)
+    EXTRA['music'] = segs
+    print('full: T=%.2f s; timeline %.2f-%.2f, now->hist cut %.2f, lev %.2f, infl %.2f, outro %.2f, final %.2f' %
+          (T, VB(12), VB(29), VB(36), VB(56), VB(68), VB(74), VB(78.5)))
+    print('music', segs)
     for c in CR:
         print('  crash %s  %s -> %s  %d%%  rec %s (%s y)' % (c['label'], c['peak'], c['low'], c['dd'], c['rec'], c.get('years')))
 nF = int(round(T * FPS))

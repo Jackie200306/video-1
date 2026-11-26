@@ -52,7 +52,7 @@ function renderFrame(i) {
   // cuts between sections: a short ivory flash on the bar line
   if (TL.full) {
     let f = 0;
-    for (const tc of [NS.cut, LV.t0, INF.t0, OUT.t0]) f = Math.max(f, bump(t, tc, 0.12, 0.04, 0.4));
+    for (const tc of [NS.cut, LV.t0, INF.t0, OUT.t0, OUT.final]) f = Math.max(f, bump(t, tc, 0.12, 0.04, 0.4));
     if (f > 0.003) { ctx.fillStyle = `rgba(252,250,245,${0.92 * f})`; ctx.fillRect(0, 0, W, H); }
     if (t > OUT.fade) { ctx.fillStyle = `rgba(252,250,245,${smooth(OUT.fade, TL.T - 0.2, t)})`; ctx.fillRect(0, 0, W, H); }
   }

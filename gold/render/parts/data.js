@@ -189,10 +189,10 @@ function parDaily(t) {
   const wFK = [[0, 3.0], [R0, 3.0], [R0 + 0.3, 7.0], [R1 - 0.2, 7.0], [R1 + 0.4, 3.0]];
   const wSK = [[0, 2.0], [R0, 2.0], [R0 + 0.3, 5.0], [R1 - 0.2, 5.0], [R1 + 0.4, 2.0]];
   if (full) {
-    lbK.push([VB(13), 300], [VB(28.6), 300], [VB(29.6), 230], [VB(30.4), 230], [VB(31.3), 340], [VB(36.6), 340], [VB(37.3), 380], [VB(38.7), 1480], [NS.rewind, 1480], [NS.cut - 0.05, 2400]);
-    hxK.push([VB(13), 0.14], [VB(36.6), 0.14], [VB(37.3), 0.10], [VB(38.7), 0.30], [NS.rewind, 0.30], [NS.cut - 0.05, 0.05]);
-    hyMaxK.push([VB(13), 0.30], [VB(37), 0.30], [VB(38.7), 0.36]);
-    hyMinK.push([VB(13), -0.5], [VB(38.7), -0.45]);
+    lbK.push([VB(13), 300], [VB(21.6), 300], [VB(22.6), 230], [VB(23.4), 230], [VB(24.3), 340], [VB(28.6), 340], [VB(29.3), 380], [VB(30.7), 1480], [NS.rewind, 1480], [NS.cut - 0.05, 2400]);
+    hxK.push([VB(13), 0.14], [VB(28.6), 0.14], [VB(29.3), 0.10], [VB(30.7), 0.30], [NS.rewind, 0.30], [NS.cut - 0.05, 0.05]);
+    hyMaxK.push([VB(13), 0.30], [VB(29), 0.30], [VB(30.7), 0.36]);
+    hyMinK.push([VB(13), -0.5], [VB(30.7), -0.45]);
     wFK.push([NS.rewind, 3.0], [NS.rewind + 0.4, 6.0]);
     wSK.push([NS.rewind, 2.0], [NS.rewind + 0.4, 4.0]);
   }
@@ -214,7 +214,7 @@ function parDaily(t) {
     }
     z += 0.22 * bump(t, NS.card + 0.08, 0.08, 0.2, 0.5);
     z -= 0.55 * Math.pow(smooth(NS.rewind, NS.cut, t), 1.5);
-    yaw += 0.10 * smooth(VB(38), VB(38.8), t) * (1 - smooth(NS.rewind, NS.cut, t));
+    yaw += 0.10 * smooth(VB(30), VB(30.8), t) * (1 - smooth(NS.rewind, NS.cut, t));
   }
   return { lb: keyed(t, lbK), hx: keyed(t, hxK), zoom: z, yaw, pitch: (-3 + 1.5 * Math.sin(t * 2 * Math.PI / 31)) * Math.PI / 180,
     hyMin: keyed(t, hyMinK), hyMax: keyed(t, hyMaxK), wF: keyed(t, wFK), wS: keyed(t, wSK), span: 150 };
@@ -232,10 +232,10 @@ function shakesDaily() {
 }
 // ---- the history chart (log $, 1970 -> 2026)
 function parHist(t) {
-  const lbK = [[VB(44), 2600], [VB(45.8), 2600], [VB(46.6), 2300], [VB(48), 2100], [VB(48.5), 3200], [VB(49.1), 7000], [VB(50.6), 7000], [VB(51.3), 2600],
-    [VB(52.9), 2600], [VB(53.5), 3800], [VB(55.6), 4400], [VB(56.4), 3000], [VB(57.9), 3300], [VB(58.5), 4200], [VB(59.8), 21000]];
-  const hxK = [[VB(44), 0.12], [VB(58.6), 0.14], [VB(59.8), 0.34]];
-  let z = -0.35 * (1 - smooth(VB(44), VB(44.7), t));
+  const lbK = [[VB(36), 2600], [VB(37.8), 2600], [VB(38.6), 2300], [VB(40), 2100], [VB(40.5), 3200], [VB(41.1), 7000], [VB(42.6), 7000], [VB(43.3), 2600],
+    [VB(44.9), 2600], [VB(45.5), 3800], [VB(47.6), 4400], [VB(48.4), 3000], [VB(49.9), 3300], [VB(50.5), 4200], [VB(51.8), 21000]];
+  const hxK = [[VB(36), 0.12], [VB(50.6), 0.14], [VB(51.8), 0.34]];
+  let z = -0.35 * (1 - smooth(VB(36), VB(36.7), t));
   for (const c of HS.crashes) {
     z += 0.22 * smooth(c.t_peak - BAR * 0.5, c.t_peak, t) * (1 - smooth(c.t_peak + 0.3, c.t_peak + 0.9, t));
     z -= 0.12 * bump(t, c.t_low + 0.05, 0.06, 0.25, 0.8);
@@ -245,7 +245,7 @@ function parHist(t) {
   z -= 0.40 * bump(t, HS.drop + 0.06, 0.06, 0.35, 1.1);
   const yaw = (20 + 5 * Math.sin(t * 2 * Math.PI / 23)) * Math.PI / 180 + 0.14 * smooth(HS.breakdown, HS.drop, t) * (1 - smooth(HS.drop, HS.drop + 0.7, t));
   return { lb: keyed(t, lbK), hx: keyed(t, hxK), zoom: z, yaw, pitch: (-3 + 1.5 * Math.sin(t * 2 * Math.PI / 31)) * Math.PI / 180,
-    hyMin: -0.5, hyMax: keyed(t, [[VB(44), 0.10], [VB(58.6), 0.10], [VB(59.8), 0.36]]), wF: 3.2, wS: 2.2, span: 0.32 };
+    hyMin: -0.5, hyMax: keyed(t, [[VB(36), 0.10], [VB(50.6), 0.10], [VB(51.8), 0.36]]), wF: 3.2, wS: 2.2, span: 0.32 };
 }
 function shakesHist() {
   const L = [[HS.drop, 30, 0.022, 4.0]];
