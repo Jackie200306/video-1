@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:NotoBlack;src:url(/fonts/NotoSansCJKsc-Black.otf);}
+@font-face{font-family:NotoBold;src:url(/fonts/NotoSansCJKsc-Bold.otf);}
+@font-face{font-family:NotoMed;src:url(/fonts/NotoSansCJKsc-Medium.otf);}
+@font-face{font-family:SerifBlack;src:url(/fonts/NotoSerifCJKsc-Black.otf);}
+@font-face{font-family:SerifBold;src:url(/fonts/NotoSerifCJKsc-Bold.otf);}
+@font-face{font-family:Barlow;src:url(/fonts/BarlowCondensed-Bold.ttf);}
+@font-face{font-family:BarlowSemi;src:url(/fonts/BarlowCondensed-SemiBold.ttf);}
+@font-face{font-family:Playfair;src:url(/fonts/PlayfairDisplay-VF.ttf);font-weight:400 900;}
+@font-face{font-family:DMSerif;src:url(/fonts/DMSerifDisplay-Regular.ttf);}
+@font-face{font-family:DMSerif;font-style:italic;src:url(/fonts/DMSerifDisplay-Italic.ttf);}
+@font-face{font-family:Cormorant;src:url(/fonts/CormorantGaramond-VF.ttf);font-weight:300 700;}
+html,body{margin:0;background:#000;overflow:hidden}
+canvas{display:block}
+</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+const th = new URLSearchParams(location.search).get('theme') || 'cream';
+const sc = document.createElement('script'); sc.src = th === 'lux' ? '/render/scene_lux.js' : '/render/scene.js';
+document.body.appendChild(sc);
+</script>
+</body></html>

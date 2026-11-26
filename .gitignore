@@ -2,3 +2,5 @@ bitcoin/fonts/
 bitcoin/build/
 node_modules/
 __pycache__/
+gold/fonts/
+gold/build/
