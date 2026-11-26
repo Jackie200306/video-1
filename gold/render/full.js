@@ -1369,7 +1369,7 @@ function drawHistMarks(c, t) {
     // 2026: the open question
     if (!cr.t_rec && t > cr.t_low + 0.6 && t < HS.table + 0.3) {
       const B = hp2(c, cr.low_x, cr.low[1]); const a = smooth(cr.t_low + 0.6, cr.t_low + 0.9, t) * (1 - smooth(HS.table - 0.1, HS.table + 0.2, t));
-      if (B && a > 0.01) { ctx.save(); ctx.globalAlpha = a; halo('回本要多久？', B.x - 30, B.y + 70, F.cn(48), 'right', 16); goldText('回本要多久？', B.x - 30, B.y + 70, F.cn(48), 48, 'right'); ctx.restore(); }
+      if (B && a > 0.01) { ctx.save(); ctx.globalAlpha = a; halo('回本要多久？', B.x + 44, B.y + 18, F.cn(48), 'left', 16); goldText('回本要多久？', B.x + 44, B.y + 18, F.cn(48), 48, 'left'); ctx.restore(); }
     }
   });
 }
